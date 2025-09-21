@@ -1,0 +1,24 @@
+# Build outputs
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+
+# IDE local stuff
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Configuration files with secrets
+appsettings.Development.json
+appsettings.Production.json
+*.env
+.env
+
+# User Secrets
+secrets.json
