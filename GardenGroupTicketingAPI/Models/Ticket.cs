@@ -15,7 +15,7 @@ namespace GardenGroupTicketingAPI.Models
         //[BsonElement("reported_by")]
         //public ReportedBy ReportedBy { get; set; } do i create a new class or pass in an employee?
         [BsonElement("priority_level")]
-        public TicketPriority PriorityLevel { get; set; } = TicketPriority.Medium; // 1 = Low, 2 = Medium, 3 = High, 4 = Critical
+        public double PriorityLevel { get; set; } = 2; // 1 = Low, 2 = Medium, 3 = High, 4 = Critical
         [BsonElement("deadline")]
         public DateTime? Deadline { get; set; }
         [BsonElement("status")]
@@ -59,13 +59,13 @@ namespace GardenGroupTicketingAPI.Models
 
          */
 
-        public enum TicketPriority
+        /*public enum TicketPriority
         {
             Low = 1,
             Medium = 2,
             High = 3,
             Critical = 4
-        }
+        }*/
 
         public enum TicketStatus
         {

@@ -28,5 +28,35 @@ namespace GardenGroupTicketingAPI.Models
             public string Username { get; set; } = null!;
             public EmployeeRole Role { get; set; } = EmployeeRole.RegularEmployee;
         }
+        public class CreateTicketRequest
+        {
+            public string Description { get; set; } = null!;
+            public double? PriorityLevel { get; set; } = 2;
+            public DateTime? Deadline { get; set; }
+        }
+        public class UpdateTicketRequest
+        {
+            public string Description { get; set; }
+            //public string? Title { get; set; } could have title??
+            public double? PriorityLevel { get; set;}
+            public string? Status { get; set; }
+            public DateTime? Deadline { get; set; }
+            //public string? AssignedTo { get; set; } parent referencing?
+        }
+
+        /* public class ChangePasswordRequest                   PATOS STUFF????
+         * {
+         *      public string? CurrentPassword { get; set; }
+         *      public string NewPassword { get; set; } = null!
+         * } */
+
+        public class DashboardResponse
+        {
+            public int TotalTickets { get; set; }
+            public double OpenPercentage { get; set; }
+            public double ResolvedPercentage { get; set; }
+            public double ClosedWithoutResolvePercentage { get; set; }
+            //public Dictionary<string, int>? TicketsByPriority { get; set; } possible sorting???
+        }
     }
 }
