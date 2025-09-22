@@ -21,7 +21,7 @@ namespace GardenGroupTicketingAPI.Models
         [BsonElement("phone_number")]
         public string? PhoneNumber { get; set; }
         [BsonElement("address")]
-        public Address? EmployeeAddress { get; set; }
+        public Address? Address { get; set; }
         [BsonElement("username")]
         public string Username { get; set; }
         [BsonElement("password_hash")]
@@ -30,33 +30,30 @@ namespace GardenGroupTicketingAPI.Models
         [BsonElement("role")]
         public EmployeeRole Role { get; set; } = EmployeeRole.RegularEmployee;
         [BsonElement("handled_tickets")]
-        public List<string> HandledTickets { get; set; } = new List<string>();
-        [BsonElement("is_active")]
+        //public List<string> HandledTickets { get; set; } = new List<string>(); // probably not needed here
+        //[BsonElement("is_active")]
         public bool IsActive { get; set; } = true;
         [BsonElement("created_date")]
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
+        public DateTime CreatedDate { get; set; } = DateTime.Now;    
+    }
+    public class Address
+    {
+        [BsonElement("street")]
+        public string? Street { get; set; }
 
+        [BsonElement("house_number")]
+        public double? HouseNumber { get; set; }
 
+        [BsonElement("city")]
+        public string? City { get; set; }
 
-        public class Address
-        {
-            [BsonElement("street")]
-            public string? Street { get; set; }
+        [BsonElement("postal_code")]
+        public string? PostalCode { get; set; }
+    }
 
-            [BsonElement("house_number")]
-            public double? HouseNumber { get; set; }
-
-            [BsonElement("city")]
-            public string? City { get; set; }
-
-            [BsonElement("postal_code")]
-            public string? PostalCode { get; set; }
-        }
-
-        public enum EmployeeRole
-        {
-            RegularEmployee,
-            ServiceDeskEmployee
-        }
+    public enum EmployeeRole
+    {
+        RegularEmployee,
+        ServiceDeskEmployee
     }
 }
