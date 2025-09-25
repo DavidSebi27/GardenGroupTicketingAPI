@@ -33,8 +33,8 @@ namespace GardenGroupTicketingAPI.Models
         //public EmployeeRole Role { get; set; } = EmployeeRole.RegularEmployee;
         //[BsonElement("handled_tickets")]
         //public List<string> HandledTickets { get; set; } = new List<string>(); // probably not needed here
-        //[BsonElement("is_active")]
-        //public bool IsActive { get; set; } = true;
+        [BsonElement("is_active")]
+        public bool IsActive { get; set; } = true;
         [BsonElement("created_date")]
         public DateTime CreatedDate { get; set; } = DateTime.Now;    
     }

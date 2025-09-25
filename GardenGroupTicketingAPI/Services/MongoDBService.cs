@@ -45,8 +45,76 @@ namespace GardenGroupTicketingAPI.Services
 
         public async Task DeleteTicketAsync(string id) =>
             await _ticketsCollection.DeleteOneAsync(t => t.Id == id);
+
         // Employee operations (clear as smoke)
 
+        public async Task<List<Employee>> GetEmployeesAsync() =>
+            await _employeesCollection.Find(e => e.IsActive).ToListAsync();
+
+        public async Task<Employee?> GetEmployeeAsync(string employeeId) =>
+            await _employeesCollection.Find(e => e.EmployeeId == employeeId && e.IsActive).FirstOrDefaultAsync();
+
+        public async Task CreateEmployeeAsync(Employee employee) =>
+            await _employeesCollection.InsertOneAsync(employee);
+
+        public async Task UpdateEmployeeAsync(string employeeId, Employee employee) =>
+            await _employeesCollection.ReplaceOneAsync(e => e.EmployeeId == employeeId, employee);
+
+        public async Task DeleteEmployeeAsync(string employeeId)
+        {
+            
+        }
+
         // Dashboard operations (maybe??)
+
+        public async Task<DashboardResponse> GetEmployeeDashboardAsync(string employeeId)
+        {
+            var tickets = await GetTicketsByEmployeeAsync(employeeId);
+            return CalculateDashboardStats(tickets);
+        }
+
+        public async Task<DashboardResponse> GetServiceDeskDashboardAsync()
+        {
+            var allTickets = await GetTicketsAsync();
+            var dashboard = CalculateDashboardStats(allTickets);
+
+            dashboard.TicketsByPriority = allTickets
+                .GroupBy(t => GetPriorityName(t.PriorityLevel))
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            /*dashboard.TicketsByBranch = allTickets
+                .GroupBy(t => t.ReportedBy.Department)
+                .ToDictionary(g => g.Key, g => g.Count());*/
+
+            return dashboard;
+        }
+
+        private static DashboardResponse CalculateDashboardStats(List<Ticket> tickets)
+        {
+            var total = tickets.Count;
+            var open = tickets.Count(t => t.Status == TicketStatus.open || t.Status == TicketStatus.inProgress);
+            var resolved = tickets.Count(t => t.Status == TicketStatus.resolved);
+            var closed = tickets.Count(t => t.Status == TicketStatus.closed);
+
+            return new DashboardResponse
+            {
+                TotalTickets = total,
+                OpenPercentage = total > 0 ? Math.Round((double)open / total * 100, 2) : 0,
+                ResolvedPercentage = total > 0 ? Math.Round((double)resolved / total * 100, 2) : 0,
+                ClosedWithoutResolvePercentage = total > 0 ? Math.Round((double)closed / total * 100, 2) : 0
+            };
+        }
+
+        private static string GetPriorityName(double priorityLevel)
+        {
+            return priorityLevel switch
+            {
+                1 => "Low",
+                2 => "Medium",
+                3 => "High",
+                4 => "Critical",
+                _ => "Unknown"
+            };
+        }
     }
 }
