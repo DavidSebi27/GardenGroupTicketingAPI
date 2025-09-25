@@ -41,14 +41,14 @@ namespace GardenGroupTicketingAPI.Models
         public double? PriorityLevel { get; set; }
         public string? Status { get; set; }
         public DateTime? Deadline { get; set; }
-        //public string? AssignedTo { get; set; } parent referencing?
+        public string? AssignedTo { get; set; }
     }
 
-    /* public class ChangePasswordRequest                   PATOS STUFF????
-     * {
-     *      public string? CurrentPassword { get; set; }
-     *      public string NewPassword { get; set; } = null!
-     * } */
+    public class ChangePasswordRequest // PREPARING FOR PATO IDK IF THIS WILL BE USED OR NOT? IF NOT, I WILL DELETE THIS
+    {
+        public string? CurrentPassword { get; set; }
+        public string NewPassword { get; set; } = null!;
+    }
     public class DashboardResponse
     {
         public int TotalTickets { get; set; }

@@ -29,10 +29,6 @@ namespace GardenGroupTicketingAPI.Models
         [BsonElement("password_hash")]
         [JsonIgnore]
         public string PasswordHash { get; set; } = null!;
-        //[BsonElement("role")]
-        //public EmployeeRole Role { get; set; } = EmployeeRole.RegularEmployee;
-        //[BsonElement("handled_tickets")]
-        //public List<string> HandledTickets { get; set; } = new List<string>(); // probably not needed here
         [BsonElement("is_active")]
         public bool IsActive { get; set; } = true;
         [BsonElement("created_date")]

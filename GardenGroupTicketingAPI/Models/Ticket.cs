@@ -25,42 +25,11 @@ namespace GardenGroupTicketingAPI.Models
         public TicketStatus Status { get; set; } = TicketStatus.open;
         [BsonElement("ticket_number")]
         public string TicketNumber { get; set; }
-
-        /* Extra functionalities which are probably going to get added to the schema as fields but currently are not:
         [BsonElement("resolution_notes")]
         public string? ResolutionNotes { get; set; }
         [BsonElement("resolved_date")]
         public DateTime? ResolvedDate { get; set; }
-        [BsonElement("ticket_number")]
-        public string? TicketNumber { get; set; } could this be the id for the ticket?
-
-
-        This is how the reportedby would look like, may not be correct
-        public class ReportedBy
-        {
-            [BsonElement("employee_id")] SHOULD INCLUDE MAYBE MO
-            public string EmployeeId { get; set; } = null!;
-
-            [BsonElement("email")]
-            public string Email { get; set; } = null!;
-
-            [BsonElement("department")]
-            public string Department { get; set; } = null!;
-
-            [BsonElement("phone_number")]
-            public string {get ; set; } = null!;
-
-            [BsonElement("username)]
-            public string UserName { get; set; }
-
-            [BsonElement("last_name")]
-            public string LastName { get; set; }
-
-            [BsonElement("first_name")]
-            public string FirstName { get; set; }
-        }
-
-         */
+        
     }
 
     public enum TicketStatus
