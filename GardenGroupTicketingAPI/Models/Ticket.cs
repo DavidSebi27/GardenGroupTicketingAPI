@@ -14,16 +14,18 @@ namespace GardenGroupTicketingAPI.Models
         public DateTime Date { get; set; } = DateTime.Now;
         //[BsonElement("reported_by")]
         //public ReportedBy ReportedBy { get; set; } do i create a new class or pass in an employee?
+        //[BsonElement("reported_by")]
+        //public Employee ReportedBy { get; set; } like so??
+        [BsonElement("handled_by")]
+        public Employee HandledBy { get; set; }
         [BsonElement("priority_level")]
         public double PriorityLevel { get; set; } = 2; // 1 = Low, 2 = Medium, 3 = High, 4 = Critical
         [BsonElement("deadline")]
         public DateTime? Deadline { get; set; }
         [BsonElement("status")]
-        public TicketStatus Status { get; set; } = TicketStatus.Open;
+        public TicketStatus Status { get; set; } = TicketStatus.open;
 
         /* Extra functionalities which are probably going to get added to the schema as fields but currently are not:
-        [BsonElement("assigned_to")]
-        public string? AssignedTo { get; set; }
         [BsonElement("resolution_notes")]
         public string? ResolutionNotes { get; set; }
         [BsonElement("resolved_date")]
@@ -58,21 +60,13 @@ namespace GardenGroupTicketingAPI.Models
         }
 
          */
+    }
 
-        /*public enum TicketPriority
-        {
-            Low = 1,
-            Medium = 2,
-            High = 3,
-            Critical = 4
-        }*/
-
-        public enum TicketStatus
-        {
-            Open, // sent in
-            InProgress, // currently being worked on
-            Resolved, // closed with resolution
-            Closed // closed without resolution
-        }
+    public enum TicketStatus
+    {
+        open, // sent in
+        inProgress, // currently being worked on
+        resolved, // closed with resolution
+        closed // closed without resolution
     }
 }

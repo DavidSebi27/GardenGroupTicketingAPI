@@ -20,6 +20,8 @@ namespace GardenGroupTicketingAPI.Models
         public string Department { get; set; } = null!;
         [BsonElement("phone_number")]
         public string? PhoneNumber { get; set; }
+        [BsonElement("access_level")]
+        public int AccessLevel { get; set; } = 1;
         [BsonElement("address")]
         public Address? Address { get; set; }
         [BsonElement("username")]
@@ -27,12 +29,12 @@ namespace GardenGroupTicketingAPI.Models
         [BsonElement("password_hash")]
         [JsonIgnore]
         public string PasswordHash { get; set; } = null!;
-        [BsonElement("role")]
-        public EmployeeRole Role { get; set; } = EmployeeRole.RegularEmployee;
-        [BsonElement("handled_tickets")]
+        //[BsonElement("role")]
+        //public EmployeeRole Role { get; set; } = EmployeeRole.RegularEmployee;
+        //[BsonElement("handled_tickets")]
         //public List<string> HandledTickets { get; set; } = new List<string>(); // probably not needed here
         //[BsonElement("is_active")]
-        public bool IsActive { get; set; } = true;
+        //public bool IsActive { get; set; } = true;
         [BsonElement("created_date")]
         public DateTime CreatedDate { get; set; } = DateTime.Now;    
     }
@@ -51,9 +53,9 @@ namespace GardenGroupTicketingAPI.Models
         public string? PostalCode { get; set; }
     }
 
-    public enum EmployeeRole
+    /*public enum EmployeeRole
     {
         RegularEmployee,
         ServiceDeskEmployee
-    }
+    }*/
 }

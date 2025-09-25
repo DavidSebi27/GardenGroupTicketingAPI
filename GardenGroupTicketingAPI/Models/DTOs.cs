@@ -26,7 +26,7 @@ namespace GardenGroupTicketingAPI.Models
             public string? PhoneNumber { get; set; }
             public Address? Address { get; set; }
             public string Username { get; set; } = null!;
-            public EmployeeRole Role { get; set; } = EmployeeRole.RegularEmployee;
+            public int AccessLevel { get; set; } = 1;
         }
         public class CreateTicketRequest
         {
