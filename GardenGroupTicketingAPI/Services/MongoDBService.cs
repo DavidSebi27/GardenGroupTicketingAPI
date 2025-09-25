@@ -116,5 +116,8 @@ namespace GardenGroupTicketingAPI.Services
                 _ => "Unknown"
             };
         }
+
+        public async Task<bool> EmailExistsAsync(string email) =>
+            await _employeesCollection.Find(e => e.Email == email && e.IsActive).AnyAsync();
     }
 }
