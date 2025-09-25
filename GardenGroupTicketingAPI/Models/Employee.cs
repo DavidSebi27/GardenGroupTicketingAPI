@@ -25,7 +25,7 @@ namespace GardenGroupTicketingAPI.Models
         [BsonElement("address")]
         public Address? Address { get; set; }
         [BsonElement("username")]
-        public string Username { get; set; }
+        public string EmployeeId { get; set; }
         [BsonElement("password_hash")]
         [JsonIgnore]
         public string PasswordHash { get; set; } = null!;

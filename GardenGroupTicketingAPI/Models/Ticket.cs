@@ -12,10 +12,9 @@ namespace GardenGroupTicketingAPI.Models
         public string Description { get; set; } = null!;
         [BsonElement("date")]
         public DateTime Date { get; set; } = DateTime.Now;
-        //[BsonElement("reported_by")]
-        //public ReportedBy ReportedBy { get; set; } do i create a new class or pass in an employee?
-        //[BsonElement("reported_by")]
-        //public Employee ReportedBy { get; set; } like so??
+        //literally no scheme so im passing in an employee instead xP
+        [BsonElement("reported_by")]
+        public Employee ReportedBy { get; set; }
         [BsonElement("handled_by")]
         public Employee HandledBy { get; set; }
         [BsonElement("priority_level")]
@@ -24,6 +23,8 @@ namespace GardenGroupTicketingAPI.Models
         public DateTime? Deadline { get; set; }
         [BsonElement("status")]
         public TicketStatus Status { get; set; } = TicketStatus.open;
+        [BsonElement("ticket_number")]
+        public string TicketNumber { get; set; }
 
         /* Extra functionalities which are probably going to get added to the schema as fields but currently are not:
         [BsonElement("resolution_notes")]
