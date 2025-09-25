@@ -53,9 +53,10 @@ namespace GardenGroupTicketingAPI.Models
         public string? PostalCode { get; set; }
     }
 
-    /*public enum EmployeeRole
+    public enum AccessLevel
     {
-        RegularEmployee,
-        ServiceDeskEmployee
-    }*/
+        Regular = 1,
+        ServiceDesk = 2,
+        Manager = 3
+    }
 }
