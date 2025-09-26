@@ -62,7 +62,9 @@ namespace GardenGroupTicketingAPI.Services
 
         public async Task DeleteEmployeeAsync(string employeeId)
         {
-            
+            // Soft delete by setting IsActive to false instead of actually deleting
+            var update = Builders<Employee>.Update.Set(e => e.IsActive, false);
+            await _employeesCollection.UpdateOneAsync(e => e.EmployeeId == employeeId, update);
         }
 
         // Dashboard operations (maybe??)

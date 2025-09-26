@@ -21,6 +21,7 @@ namespace GardenGroupTicketingAPI
             builder.Services.AddSingleton<MongoDBService>();
             builder.Services.AddScoped<AuthService>();
 
+            builder.Services.AddScoped<IPasswordHashingService, PasswordHashingService>();
             // Add services to the container.
 
             builder.Services.AddControllers();

@@ -32,7 +32,7 @@ namespace GardenGroupTicketingAPI.Controllers
             return Ok(userTickets);
         }
 
-        [HttpGet]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetTicket(string id) // get ticket by id
         {
             var ticket = await _mongoDBService.GetTicketAsync(id);

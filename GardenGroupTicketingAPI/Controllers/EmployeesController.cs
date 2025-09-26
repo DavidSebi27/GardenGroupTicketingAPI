@@ -123,7 +123,7 @@ namespace GardenGroupTicketingAPI.Controllers
                 return BadRequest(new { message = "Cannot delete your own account." });
             }
 
-            await _mongoDbService.DeleteTicketAsync(userId);
+            await _mongoDbService.DeleteEmployeeAsync(userId);
             return NoContent();
         }
 
