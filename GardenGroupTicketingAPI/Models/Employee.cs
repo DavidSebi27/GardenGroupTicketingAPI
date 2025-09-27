@@ -10,27 +10,41 @@ namespace GardenGroupTicketingAPI.Models
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
+        
         [BsonElement("first_name")]
         public string FirstName { get; set; } = null!;
+        
         [BsonElement("last_name")]
         public string LastName { get; set; } = null!;
+        
         [BsonElement("email")]
         public string Email { get; set; } = null!;
+        
         [BsonElement("department")]
         public string Department { get; set; } = null!;
+        
         [BsonElement("phone_number")]
         public string? PhoneNumber { get; set; }
+        
         [BsonElement("access_level")]
         public int AccessLevel { get; set; } = 1;
+        
         [BsonElement("address")]
         public Address? Address { get; set; }
-        [BsonElement("username")]
-        public string EmployeeId { get; set; }
+
+        [BsonElement("company")]
+        public string Company { get; set; } = null!;
+
+        [BsonElement("employee_nr")]
+        public int EmployeeNumber { get; set; }
+        
         [BsonElement("password_hash")]
         [JsonIgnore]
         public string PasswordHash { get; set; } = null!;
+        
         [BsonElement("is_active")]
         public bool IsActive { get; set; } = true;
+        
         [BsonElement("created_date")]
         public DateTime CreatedDate { get; set; } = DateTime.Now;    
     }
@@ -40,7 +54,7 @@ namespace GardenGroupTicketingAPI.Models
         public string? Street { get; set; }
 
         [BsonElement("house_number")]
-        public double? HouseNumber { get; set; }
+        public int? HouseNumber { get; set; }
 
         [BsonElement("city")]
         public string? City { get; set; }
