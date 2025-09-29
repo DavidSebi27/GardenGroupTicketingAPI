@@ -24,7 +24,13 @@ namespace GardenGroupTicketingAPI.Services
             await _ticketsCollection.Find(_=> true).ToListAsync();
 
         public async Task<List<Ticket>> GetTicketsByEmployeeAsync(int employeeNumber) =>
-            await _ticketsCollection.Find(t => t.ReportedBy.EmployeeNumber == employeeNumber).ToListAsync(); 
+            await _ticketsCollection.Find(t => t.ReportedBy.EmployeeNumber == employeeNumber).ToListAsync();
+
+        public async Task<List<Ticket>> GetTicketsByEmployeeIdAsync(string mongoDbId) =>
+            await _ticketsCollection.Find(t => t.ReportedBy.EmployeeNumber.ToString() == mongoDbId).ToListAsync();
+
+        public async Task<List<Ticket>> GetTicketsByEmployeeNumberAsync(int employeeNumber) =>
+            await _ticketsCollection.Find(t => t.ReportedBy.EmployeeNumber == employeeNumber).ToListAsync();
 
         public async Task<Ticket?> GetTicketAsync(string id) =>
             await _ticketsCollection.Find(t => t.Id == id).FirstOrDefaultAsync();

@@ -27,11 +27,26 @@ namespace GardenGroupTicketingAPI.Controllers
         [HttpGet("servicedesk")]
         public async Task<IActionResult> GetServiceDeskDashboard()
         {
-            // Only service desk employees can access this dashboard
             if (!AuthService.IsServiceDeskEmployee(User))
                 return Forbid();
 
             var dashboard = await _mongoDBService.GetServiceDeskDashboardAsync();
+            return Ok(dashboard);
+        }
+
+        [HttpGet("employee/{employeeNumber}")]
+        public async Task<IActionResult> GetEmployeeDashboardByNumber(int employeeNumber)
+        {
+            if (!AuthService.IsServiceDeskEmployee(User))
+                return Forbid();
+
+            var employee = await _mongoDBService.GetEmployeeByNumberAsync(employeeNumber);
+            if (employee == null)
+            {
+                return NotFound(new { message = "Employee not found." });
+            }
+
+            var dashboard = await _mongoDBService.GetEmployeeDashboardAsync(employee.Id!);
             return Ok(dashboard);
         }
     }
