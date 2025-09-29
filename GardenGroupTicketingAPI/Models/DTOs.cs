@@ -9,7 +9,10 @@ namespace GardenGroupTicketingAPI.Models
     {
         [Required(ErrorMessage = "Employee number is required.")]
         [Range(1, int.MaxValue, ErrorMessage = "Employee number must be a positive number.")]
-        public string EmployeeId { get; set; } = null!;
+        public int EmployeeNumber { get; set; }
+
+        [Required(ErrorMessage = "Password is required")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be between 6 and 100 characters")]
         public string Password { get; set; } = null!;
     }
 
@@ -46,7 +49,11 @@ namespace GardenGroupTicketingAPI.Models
         public string? PhoneNumber { get; set; }
         
         public Address? Address { get; set; }
-        
+
+        [Required(ErrorMessage = "Company is required")]
+        [StringLength(100, ErrorMessage = "Company name cannot exceed 100 characters")]
+        public string Company { get; set; } = null!;
+
         [Required(ErrorMessage = "Employee number is required")]
         [Range(1, int.MaxValue, ErrorMessage = "Employee number must be a positive integer")]
         public int EmployeeNumber { get; set; }

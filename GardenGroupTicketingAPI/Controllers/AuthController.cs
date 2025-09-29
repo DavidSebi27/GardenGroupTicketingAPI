@@ -26,7 +26,7 @@ namespace GardenGroupTicketingAPI.Controllers
             var result = await _authService.LoginAsync(request);
             if (result == null)
             {
-                return Unauthorized(new { message = "Invalid Employee ID or Password" });
+                return Unauthorized(new { message = "Invalid Employee Number or Password" });
             }
 
             return Ok(result);
@@ -40,14 +40,21 @@ namespace GardenGroupTicketingAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var employee = await _authService.RegisterEmployeeAsync(request);
-            if (employee == null)
+            try
             {
-                return BadRequest(new { message = "Employee with this email already exists" });
-            }
+                var employee = await _authService.RegisterEmployeeAsync(request);
+                if (employee == null)
+                {
+                    return BadRequest(new { message = "Employee with this email or employee number already exists" });
+                }
 
-            return CreatedAtAction("GetEmployee", "Employees", new { id = employee.Id },
-                new { message = "Employee registered successfully!", employee });
+                return CreatedAtAction("GetEmployee", "Employees", new { id = employee.Id },
+                    new { message = "Employee registered successfully!", employee });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }
