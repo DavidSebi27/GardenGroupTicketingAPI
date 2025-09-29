@@ -88,9 +88,22 @@ namespace GardenGroupTicketingAPI.Models
         public DateTime? Deadline { get; set; }
 
         public string? AssignedTo { get; set; }
-
+        
         [StringLength(1000, ErrorMessage = "Resolution notes cannot exceed 1000 characters")]
         public string? ResolutionNotes { get; set; }
+    }
+
+    public class AssignTicketRequest
+    {
+        [Required(ErrorMessage = "Assignee ID is required")]
+        public string AssigneeId { get; set; } = null!;
+    }
+
+    public class AddResolutionStepRequest
+    {
+        [Required(ErrorMessage = "Action taken is required")]
+        [StringLength(500, MinimumLength = 5, ErrorMessage = "Action taken must be between 5 and 500 characters")]
+        public string ActionTaken { get; set; } = null!;
     }
 
     public class ChangePasswordRequest // PREPARING FOR PATO IDK IF THIS WILL BE USED OR NOT? IF NOT, I WILL DELETE THIS
@@ -108,5 +121,14 @@ namespace GardenGroupTicketingAPI.Models
         public double ResolvedPercentage { get; set; }
         public double ClosedWithoutResolvePercentage { get; set; }
         public Dictionary<string, int>? TicketsByPriority { get; set; } // sorting
+    }
+
+    public class ServiceDeskDashboardResponse : DashboardResponse
+    {
+        public int UnassignedTickets { get; set; }
+        public int OverdueTickets { get; set; }
+        public Dictionary<string, int>? TicketsByServiceDeskEmployee { get; set; }
+        public double AverageResolutionTime { get; set; }
+
     }
 }

@@ -132,7 +132,8 @@ namespace GardenGroupTicketingAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            await _mongoDBService.UpdateTicketAsync(id, request);
+            var userId = AuthService.GetUserIdFromClaims(User);
+            await _mongoDBService.UpdateTicketAsync(id, request, userId);
 
             // Return updated ticket
             var updatedTicket = await _mongoDBService.GetTicketAsync(id);
@@ -197,7 +198,8 @@ namespace GardenGroupTicketingAPI.Controllers
                 Status = "inProgress"
             };
 
-            await _mongoDBService.UpdateTicketAsync(id, updateRequest);
+            var userId = AuthService.GetUserIdFromClaims(User);
+            await _mongoDBService.UpdateTicketAsync(id, updateRequest, userId);
 
             var updatedTicket = await _mongoDBService.GetTicketAsync(id);
             return Ok(updatedTicket);

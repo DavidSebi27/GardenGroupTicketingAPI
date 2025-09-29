@@ -18,9 +18,9 @@ namespace GardenGroupTicketingAPI.Models
         [BsonElement("reported_by")]
         public ReportedByEmployee ReportedBy { get; set; }
        
-        [BsonElement("handled_by")]
+        [BsonElement("contact_person")]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string? HandledBy { get; set; }
+        public string? ContactPerson { get; set; }
         
         [BsonElement("priority_level")]
         public int PriorityLevel { get; set; } = 2; // 1 = Low, 2 = Medium, 3 = High, 4 = Critical
@@ -30,16 +30,32 @@ namespace GardenGroupTicketingAPI.Models
         
         [BsonElement("status")]
         public TicketStatus Status { get; set; } = TicketStatus.open;
+
+        [BsonElement("resolution_notes")]
+        public string? ResolutionNotes { get; set; }
+
+        [BsonElement("resolution_steps")]
+        public List<ResolutionStep>? ResolutionSteps { get; set; } = new List<ResolutionStep>();
         
         [BsonElement("ticket_number")]
         public string TicketNumber { get; set; }
         
-        [BsonElement("resolution_notes")]
-        public string? ResolutionNotes { get; set; }
-        
         [BsonElement("resolved_date")]
         public DateTime? ResolvedDate { get; set; }
         
+    }
+
+    public class ResolutionStep
+    {
+        [BsonElement("action_done_by")]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string ActionDoneBy { get; set; } = null!;
+
+        [BsonElement("time_started")]
+        public DateTime TimeStarted { get; set; }
+
+        [BsonElement("action_taken")]
+        public string ActionTaken { get; set; } = null!;
     }
 
     public enum TicketStatus

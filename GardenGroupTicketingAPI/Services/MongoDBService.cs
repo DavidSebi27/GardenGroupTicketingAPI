@@ -43,7 +43,7 @@ namespace GardenGroupTicketingAPI.Services
             await _ticketsCollection.InsertOneAsync(ticket);
         }
 
-        public async Task UpdateTicketAsync(string id, UpdateTicketRequest updateRequest)
+        public async Task UpdateTicketAsync(string id, UpdateTicketRequest updateRequest, string updatingUserId)
         {
             var update = Builders<Ticket>.Update;
             var updates = new List<UpdateDefinition<Ticket>>();
@@ -63,20 +63,44 @@ namespace GardenGroupTicketingAPI.Services
                 updates.Add(update.Set(t => t.Deadline, updateRequest.Deadline.Value));
 
             if (!string.IsNullOrWhiteSpace(updateRequest.AssignedTo))
-                updates.Add(update.Set(t => t.HandledBy, updateRequest.AssignedTo));
+            {
+                updates.Add(update.Set(t => t.ContactPerson, updateRequest.AssignedTo));
+
+                // Add resolution step for assignment
+                var assignmentStep = new ResolutionStep
+                {
+                    ActionDoneBy = updatingUserId,
+                    TimeStarted = DateTime.UtcNow,
+                    ActionTaken = $"Ticket assigned to service desk employee"
+                };
+                updates.Add(update.Push(t => t.ResolutionSteps, assignmentStep));
+            }
 
             if (!string.IsNullOrWhiteSpace(updateRequest.ResolutionNotes))
             {
                 updates.Add(update.Set(t => t.ResolutionNotes, updateRequest.ResolutionNotes));
-                if (status == TicketStatus.resolved)
-                    updates.Add(update.Set(t => t.ResolvedDate, DateTime.Now));
+
+                var resolutionStep = new ResolutionStep
+                {
+                    ActionDoneBy = updatingUserId,
+                    TimeStarted = DateTime.UtcNow,
+                    ActionTaken = updateRequest.ResolutionNotes
+                };
+                updates.Add(update.Push(t => t.ResolutionSteps, resolutionStep));
             }
+
 
             if (updates.Any())
             {
                 var combinedUpdate = update.Combine(updates);
                 await _ticketsCollection.UpdateOneAsync(t => t.Id == id, combinedUpdate);
             }
+        }
+
+        public async Task AddResolutionStepAsync(string ticketId, ResolutionStep step)
+        {
+            var update = Builders<Ticket>.Update.Push(t => t.ResolutionSteps, step);
+            await _ticketsCollection.UpdateOneAsync(t => t.Id == ticketId, update);
         }
 
         public async Task DeleteTicketAsync(string id) =>
