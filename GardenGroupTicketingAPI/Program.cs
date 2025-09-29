@@ -20,13 +20,16 @@ namespace GardenGroupTicketingAPI
 
             builder.Services.AddSingleton<MongoDBService>();
             builder.Services.AddScoped<AuthService>();
-
             builder.Services.AddScoped<IPasswordHashingService, PasswordHashingService>();
             // Add services to the container.
 
             builder.Services.AddControllers();
 
             var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+            if (jwtSettings?.SecretKey == null)
+            {
+                throw new InvalidOperationException("JWT SecretKey is not configured.");
+            }
             var key = Encoding.ASCII.GetBytes(jwtSettings!.SecretKey);
 
             builder.Services.AddAuthentication(x =>
@@ -75,13 +78,9 @@ namespace GardenGroupTicketingAPI
             }
 
             app.UseHttpsRedirection();
-
             app.UseCors("AllowAll");
-
             app.UseAuthentication();
             app.UseAuthorization();
-
-
             app.MapControllers();
 
             // Add a health check endpoint
@@ -92,6 +91,20 @@ namespace GardenGroupTicketingAPI
                 Service = "Garden Group Incident Management API"
             });
 
+            // API info endpoint
+            app.MapGet("/api/info", () => new {
+                name = "Garden Group Ticketing API",
+                version = "1.0.0",
+                description = "REST API for Garden Group ticket management system",
+                endpoints = new
+                {
+                    health = "/health",
+                    auth = "/api/auth",
+                    employees = "/api/employees",
+                    tickets = "/api/tickets",
+                    dashboard = "/api/dashboard"
+                }
+            });
             app.Run();
         }
     }
