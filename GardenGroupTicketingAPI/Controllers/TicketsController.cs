@@ -78,7 +78,7 @@ namespace GardenGroupTicketingAPI.Controllers
 
             var userId = AuthService.GetUserIdFromClaims(User);
             var currentEmployee = await _mongoDBService.GetEmployeeByIdAsync(userId);
-            if (currentEmployee != null)
+            if (currentEmployee == null)
             {
                 return Unauthorized(new { message = "Employee not found."});
             }

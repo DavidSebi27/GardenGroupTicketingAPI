@@ -95,11 +95,8 @@ namespace GardenGroupTicketingAPI.Services
 
         public async Task CreateEmployeeAsync(Employee employee)
         {
-            if (await EmployeeNumberExistsAsync(employee.EmployeeNumber))
-            {
-                await _employeesCollection.InsertOneAsync(employee);
-            }
-        }    
+            await _employeesCollection.InsertOneAsync(employee);
+        }
 
 
         public async Task UpdateEmployeeAsync(string employeeId, Employee employee) =>
