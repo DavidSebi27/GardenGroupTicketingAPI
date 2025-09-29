@@ -23,8 +23,8 @@ namespace GardenGroupTicketingAPI.Services
         public async Task<List<Ticket>> GetTicketsAsync() =>
             await _ticketsCollection.Find(_=> true).ToListAsync();
 
-        public async Task<List<Ticket>> GetTicketsByEmployeeAsync(string employeeId) =>
-            await _ticketsCollection.Find(t => t.ReportedBy.EmployeeId == employeeId).ToListAsync();
+        public async Task<List<Ticket>> GetTicketsByEmployeeAsync(int employeeNumber) =>
+            await _ticketsCollection.Find(t => t.ReportedBy.EmployeeNumber == employeeNumber).ToListAsync(); 
 
         public async Task<Ticket?> GetTicketAsync(string id) =>
             await _ticketsCollection.Find(t => t.Id == id).FirstOrDefaultAsync();
@@ -33,14 +33,44 @@ namespace GardenGroupTicketingAPI.Services
         {
             var count = await _ticketsCollection.CountDocumentsAsync(_ => true);
             ticket.TicketNumber = $"TGG-{DateTime.Now.Year}-{(count + 1):D6}";
-
             ticket.Date = DateTime.Now;
             await _ticketsCollection.InsertOneAsync(ticket);
         }
-        // this is missing for now
-        public async Task UpdateTicketAsync(string id, Ticket ticket)
+
+        public async Task UpdateTicketAsync(string id, UpdateTicketRequest updateRequest)
         {
-            
+            var update = Builders<Ticket>.Update;
+            var updates = new List<UpdateDefinition<Ticket>>();
+            var status = TicketStatus.open;
+
+            if (!string.IsNullOrWhiteSpace(updateRequest.Description))
+                updates.Add(update.Set(t => t.Description, updateRequest.Description.Trim()));
+
+            if (updateRequest.PriorityLevel.HasValue)
+                updates.Add(update.Set(t => t.PriorityLevel, updateRequest.PriorityLevel.Value));
+
+            if (!string.IsNullOrWhiteSpace(updateRequest.Status) &&
+                Enum.TryParse<TicketStatus>(updateRequest.Status, out status))
+                updates.Add(update.Set(t => t.Status, status));
+
+            if (updateRequest.Deadline.HasValue)
+                updates.Add(update.Set(t => t.Deadline, updateRequest.Deadline.Value));
+
+            if (!string.IsNullOrWhiteSpace(updateRequest.AssignedTo))
+                updates.Add(update.Set(t => t.HandledBy, updateRequest.AssignedTo));
+
+            if (!string.IsNullOrWhiteSpace(updateRequest.ResolutionNotes))
+            {
+                updates.Add(update.Set(t => t.ResolutionNotes, updateRequest.ResolutionNotes));
+                if (status == TicketStatus.resolved)
+                    updates.Add(update.Set(t => t.ResolvedDate, DateTime.Now));
+            }
+
+            if (updates.Any())
+            {
+                var combinedUpdate = update.Combine(updates);
+                await _ticketsCollection.UpdateOneAsync(t => t.Id == id, combinedUpdate);
+            }
         }
 
         public async Task DeleteTicketAsync(string id) =>
@@ -51,27 +81,45 @@ namespace GardenGroupTicketingAPI.Services
         public async Task<List<Employee>> GetEmployeesAsync() =>
             await _employeesCollection.Find(e => e.IsActive).ToListAsync();
 
-        public async Task<Employee?> GetEmployeeAsync(string employeeId) =>
-            await _employeesCollection.Find(e => e.EmployeeId == employeeId && e.IsActive).FirstOrDefaultAsync();
+        public async Task<Employee?> GetEmployeeByNumberAsync(int employeeNumber) =>
+            await _employeesCollection.Find(e => e.EmployeeNumber == employeeNumber && e.IsActive).FirstOrDefaultAsync();
 
-        public async Task CreateEmployeeAsync(Employee employee) =>
-            await _employeesCollection.InsertOneAsync(employee);
+        public async Task<Employee?> GetEmployeeByIdAsync(string id) =>
+            await _employeesCollection.Find(e => e.Id == id && e.IsActive).FirstOrDefaultAsync();
+
+        public async Task CreateEmployeeAsync(Employee employee)
+        {
+            if (await EmployeeNumberExistsAsync(employee.EmployeeNumber))
+            {
+                await _employeesCollection.InsertOneAsync(employee);
+            }
+        }    
+
 
         public async Task UpdateEmployeeAsync(string employeeId, Employee employee) =>
-            await _employeesCollection.ReplaceOneAsync(e => e.EmployeeId == employeeId, employee);
+            await _employeesCollection.ReplaceOneAsync(e => e.Id == employeeId, employee);
 
         public async Task DeleteEmployeeAsync(string employeeId)
         {
             // Soft delete by setting IsActive to false instead of actually deleting
             var update = Builders<Employee>.Update.Set(e => e.IsActive, false);
-            await _employeesCollection.UpdateOneAsync(e => e.EmployeeId == employeeId, update);
+            await _employeesCollection.UpdateOneAsync(e => e.Id == employeeId, update);
         }
 
-        // Dashboard operations (maybe??)
+        public async Task<bool> EmailExistsAsync(string email) =>
+            await _employeesCollection.Find(e => e.Email == email && e.IsActive).AnyAsync();
 
-        public async Task<DashboardResponse> GetEmployeeDashboardAsync(string employeeId)
+        public async Task<bool> EmployeeNumberExistsAsync(int employeeNumber) =>
+            await _employeesCollection.Find(e => e.EmployeeNumber == employeeNumber && e.IsActive).AnyAsync();
+
+        // Dashboard operations
+
+        public async Task<DashboardResponse> GetEmployeeDashboardAsync(string mongoDbId)
         {
-            var tickets = await GetTicketsByEmployeeAsync(employeeId);
+            var employee = await GetEmployeeByIdAsync(mongoDbId);
+            if (employee == null) return new DashboardResponse();
+
+            var tickets = await GetTicketsByEmployeeAsync(employee.EmployeeNumber);
             return CalculateDashboardStats(tickets);
         }
 
@@ -118,8 +166,5 @@ namespace GardenGroupTicketingAPI.Services
                 _ => "Unknown"
             };
         }
-
-        public async Task<bool> EmailExistsAsync(string email) =>
-            await _employeesCollection.Find(e => e.Email == email && e.IsActive).AnyAsync();
     }
 }
