@@ -94,7 +94,7 @@ namespace GardenGroupTicketingAPI
             // API info endpoint
             app.MapGet("/api/info", () => new {
                 name = "Garden Group Ticketing API",
-                version = "1.0.0",
+                version = "1.3.2",
                 description = "REST API for Garden Group ticket management system",
                 endpoints = new
                 {
