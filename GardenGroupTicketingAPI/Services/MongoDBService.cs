@@ -26,8 +26,16 @@ namespace GardenGroupTicketingAPI.Services
         public async Task<List<Ticket>> GetTicketsByEmployeeAsync(int employeeNumber) =>
             await _ticketsCollection.Find(t => t.ReportedBy.EmployeeNumber == employeeNumber).ToListAsync();
 
-        public async Task<List<Ticket>> GetTicketsByEmployeeIdAsync(string mongoDbId) =>
-            await _ticketsCollection.Find(t => t.ReportedBy.EmployeeNumber.ToString() == mongoDbId).ToListAsync();
+        public async Task<List<Ticket>> GetTicketsByEmployeeIdAsync(string employeeMongoId)
+        {
+            // Get the employee first to validate and get their employee number
+            var employee = await GetEmployeeByIdAsync(employeeMongoId);
+            if (employee == null)
+                return new List<Ticket>();
+
+            // Find tickets reported by this employee using their employee number
+            return await _ticketsCollection.Find(t => t.ReportedBy.EmployeeNumber == employee.EmployeeNumber).ToListAsync();
+        }
 
         public async Task<List<Ticket>> GetTicketsByEmployeeNumberAsync(int employeeNumber) =>
             await _ticketsCollection.Find(t => t.ReportedBy.EmployeeNumber == employeeNumber).ToListAsync();
