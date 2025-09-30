@@ -87,7 +87,7 @@ namespace GardenGroupTicketingAPI
             app.MapGet("/health", () => new {
                 Status = "Healthy",
                 Timestamp = DateTime.Now,
-                Version = "1.0.0",
+                Version = "1.3.2",
                 Service = "Garden Group Incident Management API"
             });
 
