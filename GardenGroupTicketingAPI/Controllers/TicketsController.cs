@@ -173,7 +173,7 @@ namespace GardenGroupTicketingAPI.Controllers
 
         // this is a running thought, i dont know if this is how it should be implemented.
         [HttpPost("{id}/assign")]
-        public async Task<IActionResult> AssignTicket(string id, [FromBody] string assigneeId)
+        public async Task<IActionResult> AssignTicket(string id, [FromBody] AssignTicketRequest request)
         {
             if (!AuthService.IsServiceDeskEmployee(User))
             {
@@ -186,7 +186,7 @@ namespace GardenGroupTicketingAPI.Controllers
                 return NotFound(new { message = "Ticket not found." });
             }
 
-            var assignee = await _mongoDBService.GetEmployeeByIdAsync(assigneeId);
+            var assignee = await _mongoDBService.GetEmployeeByIdAsync(request.AssigneeId);
             if (assignee == null)
             {
                 return BadRequest(new { message = "Assignee not found." });
@@ -194,7 +194,7 @@ namespace GardenGroupTicketingAPI.Controllers
 
             var updateRequest = new UpdateTicketRequest
             {
-                AssignedTo = assigneeId,
+                AssignedTo = request.AssigneeId,
                 Status = "inProgress"
             };
 
