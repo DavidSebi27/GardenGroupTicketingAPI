@@ -76,7 +76,7 @@ namespace GardenGroupTicketingAPI.Models
     public class UpdateTicketRequest
     {
         [StringLength(1000, MinimumLength = 10, ErrorMessage = "Description must be between 10 and 1000 characters")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [Range(1, 4, ErrorMessage = "Priority level must be between 1 (Low) and 4 (Critical)")]
         public int? PriorityLevel { get; set; }
