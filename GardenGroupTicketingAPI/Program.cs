@@ -86,7 +86,7 @@ namespace GardenGroupTicketingAPI
             // Add a health check endpoint
             app.MapGet("/health", () => new {
                 Status = "Healthy",
-                Timestamp = DateTime.UtcNow,
+                Timestamp = DateTime.Now,
                 Version = "1.0.0",
                 Service = "Garden Group Incident Management API"
             });
