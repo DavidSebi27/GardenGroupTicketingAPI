@@ -16,29 +16,42 @@ namespace GardenGroupTicketingAPI.Controllers
             _mongoDBService = mongoDBService;
         }
 
-        [HttpGet("employee")]
-        public async Task<IActionResult> GetEmployeeDashboard()
+        // Single endpoint that routes to the correct dashboard based on role
+        // Manager: All tickets statistics
+        // Service Desk: Tickets assigned to them statistics
+        // Regular: Tickets they reported statistics
+        
+        [HttpGet]
+        public async Task<IActionResult> GetDashboard()
         {
             var userId = AuthService.GetUserIdFromClaims(User);
-            var dashboard = await _mongoDBService.GetEmployeeDashboardAsync(userId);
-            return Ok(dashboard);
-        }
 
-        [HttpGet("servicedesk")]
-        public async Task<IActionResult> GetServiceDeskDashboard()
-        {
-            if (!AuthService.IsServiceDeskEmployee(User))
-                return Forbid();
+            // Managers see all tickets statistics
+            if (AuthService.IsManager(User))
+            {
+                var managerDashboard = await _mongoDBService.GetManagerDashboardAsync();
+                return Ok(managerDashboard);
+            }
 
-            var dashboard = await _mongoDBService.GetServiceDeskDashboardAsync();
-            return Ok(dashboard);
+            // Service desk employees see statistics for tickets assigned to them
+            if (AuthService.IsServiceDeskEmployee(User))
+            {
+                var serviceDeskDashboard = await _mongoDBService.GetServiceDeskDashboardAsync(userId);
+                return Ok(serviceDeskDashboard);
+            }
+
+            // Regular employees see statistics for tickets they reported
+            var employeeDashboard = await _mongoDBService.GetEmployeeDashboardAsync(userId);
+            return Ok(employeeDashboard);
         }
 
         [HttpGet("employee/{employeeNumber}")]
         public async Task<IActionResult> GetEmployeeDashboardByNumber(int employeeNumber)
         {
-            if (!AuthService.IsServiceDeskEmployee(User))
+            if (!AuthService.IsManager(User))
+            {
                 return Forbid();
+            }
 
             var employee = await _mongoDBService.GetEmployeeByNumberAsync(employeeNumber);
             if (employee == null)

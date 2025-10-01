@@ -11,9 +11,9 @@ namespace GardenGroupTicketingAPI.Controllers
     [Authorize]
     public class TicketsController : ControllerBase
     {
-        private readonly MongoDBService _mongoDBService;
+        private readonly IMongoDBService _mongoDBService;
 
-        public TicketsController(MongoDBService mongoDBService)
+        public TicketsController(IMongoDBService mongoDBService)
         {
             _mongoDBService = mongoDBService;
         }
@@ -21,10 +21,17 @@ namespace GardenGroupTicketingAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTickets()
         {
-            if (AuthService.IsServiceDeskEmployee(User))
+            if (AuthService.IsManager(User))
             {
                 var allTickets = await _mongoDBService.GetTicketsAsync();
                 return Ok(allTickets);
+            }
+
+            if (AuthService.IsServiceDeskEmployee(User))
+            {
+                var userId = AuthService.GetUserIdFromClaims(User);
+                var assignedTickets = await _mongoDBService.GetTicketsAssignedToEmployeeAsync(userId);
+                return Ok(assignedTickets);
             }
 
             var employeeNumber = AuthService.GetEmployeeNumberFromClaims(User);
@@ -33,7 +40,7 @@ namespace GardenGroupTicketingAPI.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetTicket(string id) // get ticket by id
+        public async Task<IActionResult> GetTicket(string id)
         {
             var ticket = await _mongoDBService.GetTicketAsync(id);
             if (ticket == null)
@@ -60,19 +67,20 @@ namespace GardenGroupTicketingAPI.Controllers
 
             if (string.IsNullOrWhiteSpace(request.Description))
             {
-                ModelState.AddModelError("Description", "Description cannot be empty or whitespace only");
+                ModelState.AddModelError("Description", Constants.ErrorMessages.InvalidDescription);
                 return BadRequest(ModelState);
             }
 
-            if (request.PriorityLevel < 1 || request.PriorityLevel > 4)
+            if (request.PriorityLevel < Constants.PriorityLevels.Min ||
+                request.PriorityLevel > Constants.PriorityLevels.Max)
             {
-                ModelState.AddModelError("PriorityLevel", "Priority level must be between 1 (Low) and 4 (Critical)");
+                ModelState.AddModelError("PriorityLevel", $"Priority level must be between {Constants.PriorityLevels.Min} (Low) and {Constants.PriorityLevels.Max} (Critical)");
                 return BadRequest(ModelState);
             }
 
             if (request.Deadline.HasValue && request.Deadline.Value < DateTime.UtcNow)
             {
-                ModelState.AddModelError("Deadline", "Deadline cannot be in the past");
+                ModelState.AddModelError("Deadline", Constants.ErrorMessages.DeadlineInPast);
                 return BadRequest(ModelState);
             }
 
@@ -80,13 +88,13 @@ namespace GardenGroupTicketingAPI.Controllers
             var currentEmployee = await _mongoDBService.GetEmployeeByIdAsync(userId);
             if (currentEmployee == null)
             {
-                return Unauthorized(new { message = "Employee not found."});
+                return Unauthorized(new { message = Constants.ErrorMessages.EmployeeNotFound});
             }
 
             var ticket = new Ticket
             {
                 Description = request.Description.Trim(),
-                PriorityLevel = (int)request.PriorityLevel,
+                PriorityLevel = request.PriorityLevel ?? Constants.PriorityLevels.Default,
                 Deadline = request.Deadline,
                 Status = TicketStatus.open,
                 Date = DateTime.Now,
@@ -122,13 +130,13 @@ namespace GardenGroupTicketingAPI.Controllers
             var ticket = await _mongoDBService.GetTicketAsync(id);
             if (ticket == null)
             {
-                return NotFound(new { message = "Ticket not found." });
+                return NotFound(new { message = Constants.ErrorMessages.TicketNotFound });
             }
 
             // Additional validation for deadline
             if (request.Deadline.HasValue && request.Deadline.Value < DateTime.UtcNow)
             {
-                ModelState.AddModelError("Deadline", "Deadline cannot be in the past");
+                ModelState.AddModelError("Deadline", Constants.ErrorMessages.DeadlineInPast);
                 return BadRequest(ModelState);
             }
 
@@ -152,7 +160,7 @@ namespace GardenGroupTicketingAPI.Controllers
             var ticket = await _mongoDBService.GetTicketAsync(id);
             if (ticket == null)
             {
-                return NotFound(new { message = "Ticket not found."});
+                return NotFound(new { message = Constants.ErrorMessages.TicketNotFound});
             }
 
             await _mongoDBService.DeleteTicketAsync(id);
@@ -171,6 +179,19 @@ namespace GardenGroupTicketingAPI.Controllers
             return Ok(tickets);
         }
 
+        [HttpGet("assigned-to-me")]
+        public async Task<IActionResult> GetMyAssignedTickets()
+        {
+            if (!AuthService.IsServiceDeskEmployee(User))
+            {
+                return Forbid();
+            }
+
+            var userId = AuthService.GetUserIdFromClaims(User);
+            var tickets = await _mongoDBService.GetTicketsAssignedToEmployeeAsync(userId);
+            return Ok(tickets);
+        }
+
         // this is a running thought, i dont know if this is how it should be implemented.
         [HttpPost("{id}/assign")]
         public async Task<IActionResult> AssignTicket(string id, [FromBody] AssignTicketRequest request)
@@ -183,13 +204,18 @@ namespace GardenGroupTicketingAPI.Controllers
             var ticket = await _mongoDBService.GetTicketAsync(id);
             if (ticket == null)
             {
-                return NotFound(new { message = "Ticket not found." });
+                return NotFound(new { message = Constants.ErrorMessages.TicketNotFound });
             }
 
             var assignee = await _mongoDBService.GetEmployeeByIdAsync(request.AssigneeId);
             if (assignee == null)
             {
                 return BadRequest(new { message = "Assignee not found." });
+            }
+
+            if (assignee.AccessLevel < Constants.AccessLevels.ServiceDesk)
+            {
+                return BadRequest(new { message = "Cannot assign ticket to employee without Service Desk access." });
             }
 
             var updateRequest = new UpdateTicketRequest

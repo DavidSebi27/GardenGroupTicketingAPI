@@ -42,6 +42,10 @@ namespace GardenGroupTicketingAPI.Services
         public async Task<List<Ticket>> GetTicketsByEmployeeNumberAsync(int employeeNumber) =>
             await _ticketsCollection.Find(t => t.ReportedBy.EmployeeNumber == employeeNumber).ToListAsync();
 
+        // Get tickets assigned to a specific service desk employee
+        public async Task<List<Ticket>> GetTicketsAssignedToEmployeeAsync(string employeeId) =>
+            await _ticketsCollection.Find(t => t.ContactPerson == employeeId).ToListAsync();
+
         public async Task<Ticket?> GetTicketAsync(string id) =>
             await _ticketsCollection.Find(t => t.Id == id).FirstOrDefaultAsync();
 
@@ -168,9 +172,8 @@ namespace GardenGroupTicketingAPI.Services
             if (employee == null) return new DashboardResponse();
 
             // Aggregation pipeline for employee dashboard
-            // Stage 1: Match tickets for this employee
-            // Stage 2: Group by status and count
-            // Stage 3: Project the results into dashboard format
+            // Stage 1: Match tickets reported by this employee
+            // Stage 2: Group by status and priority using $facet
             var pipeline = new[]
             {
                 new BsonDocument("$match", new BsonDocument("reported_by.employee_nr", employee.EmployeeNumber)),
@@ -204,21 +207,84 @@ namespace GardenGroupTicketingAPI.Services
             return ParseDashboardResult(result);
         }
 
-
-        public async Task<DashboardResponse> GetServiceDeskDashboardAsync()
+        // Service desk employees need statistics for tickets assigned to them.
+        // Same reasoning as employee dashboard - multiple grouping operations
+        // more efficient at database level than loading into memory and iterating.
+        public async Task<DashboardResponse> GetServiceDeskDashboardAsync(string employeeId)
         {
-            var allTickets = await GetTicketsAsync();
-            var dashboard = CalculateDashboardStats(allTickets);
+            // Aggregation pipeline for service desk dashboard
+            // Stage 1: Match tickets assigned to this service desk employee
+            // Stage 2: Group by status and priority using $facet
+            var pipeline = new[]
+            {
+                new BsonDocument("$match", new BsonDocument("contact_person", employeeId)),
+                new BsonDocument("$facet", new BsonDocument
+                {
+                    { "total", new BsonArray { new BsonDocument("$count", "count") } },
+                    { "byStatus", new BsonArray
+                        {
+                            new BsonDocument("$group", new BsonDocument
+                            {
+                                { "_id", "$status" },
+                                { "count", new BsonDocument("$sum", 1) }
+                            })
+                        }
+                    },
+                    { "byPriority", new BsonArray
+                        {
+                            new BsonDocument("$group", new BsonDocument
+                            {
+                                { "_id", "$priority_level" },
+                                { "count", new BsonDocument("$sum", 1) }
+                            })
+                        }
+                    }
+                })
+            };
 
-            dashboard.TicketsByPriority = allTickets
-                .GroupBy(t => GetPriorityName(t.PriorityLevel))
-                .ToDictionary(g => g.Key, g => g.Count());
+            var result = await _ticketsCollection.Aggregate<BsonDocument>(pipeline).FirstOrDefaultAsync();
 
-            /*dashboard.TicketsByBranch = allTickets
-                .GroupBy(t => t.ReportedBy.Department)
-                .ToDictionary(g => g.Key, g => g.Count());*/
+            return ParseDashboardResult(result);
+        }
 
-            return dashboard;
+        // Dashboard requires grouping tickets by status and priority, then counting each group.
+        // Using aggregation pipeline because:
+        // 1. Multiple grouping operations (by status, by priority) in single query
+        // 2. Calculations happen at database level instead of loading all tickets into memory
+        // 3. More efficient than: fetching all tickets -> iterating in C# -> counting each status
+        // Alternative approach would require loading potentially thousands of tickets into memory,
+        // then iterating through them multiple times to count by different fields.
+        public async Task<ServiceDeskDashboardResponse> GetManagerDashboardAsync()
+        {
+            var pipeline = new[]
+            {
+                new BsonDocument("$facet", new BsonDocument
+                {
+                    { "total", new BsonArray { new BsonDocument("$count", "count") } },
+                    { "byStatus", new BsonArray
+                        {
+                            new BsonDocument("$group", new BsonDocument
+                            {
+                                { "_id", "$status" },
+                                { "count", new BsonDocument("$sum", 1) }
+                            })
+                        }
+                    },
+                    { "byPriority", new BsonArray
+                        {
+                            new BsonDocument("$group", new BsonDocument
+                            {
+                                { "_id", "$priority_level" },
+                                { "count", new BsonDocument("$sum", 1) }
+                            })
+                        }
+                    }
+                })
+            };
+
+            var result = await _ticketsCollection.Aggregate<BsonDocument>(pipeline).FirstOrDefaultAsync();
+
+            return ParseServiceDeskDashboardResult(result);
         }
 
         // helper methods
@@ -266,56 +332,13 @@ namespace GardenGroupTicketingAPI.Services
         {
             var baseResponse = ParseDashboardResult(result);
 
-            var unassigned = result["unassigned"].AsBsonArray.Count > 0
-                ? result["unassigned"][0]["count"].AsInt32
-                : 0;
-
-            var overdue = result["overdue"].AsBsonArray.Count > 0
-                ? result["overdue"][0]["count"].AsInt32
-                : 0;
-
-            var avgResolutionTime = result["resolutionTime"].AsBsonArray.Count > 0
-                ? result["resolutionTime"][0]["avgTime"].ToDouble() / (1000 * 60 * 60) // Convert ms to hours
-                : 0;
-
             return new ServiceDeskDashboardResponse
             {
                 TotalTickets = baseResponse.TotalTickets,
                 OpenPercentage = baseResponse.OpenPercentage,
                 ResolvedPercentage = baseResponse.ResolvedPercentage,
                 ClosedWithoutResolvePercentage = baseResponse.ClosedWithoutResolvePercentage,
-                TicketsByPriority = baseResponse.TicketsByPriority,
-                UnassignedTickets = unassigned,
-                OverdueTickets = overdue,
-                AverageResolutionTime = Math.Round(avgResolutionTime, 2)
-            };
-        }
-
-        private static DashboardResponse CalculateDashboardStats(List<Ticket> tickets)
-        {
-            var total = tickets.Count;
-            var open = tickets.Count(t => t.Status == TicketStatus.open || t.Status == TicketStatus.inProgress);
-            var resolved = tickets.Count(t => t.Status == TicketStatus.resolved);
-            var closed = tickets.Count(t => t.Status == TicketStatus.closed);
-
-            return new DashboardResponse
-            {
-                TotalTickets = total,
-                OpenPercentage = total > 0 ? Math.Round((double)open / total * 100, 2) : 0,
-                ResolvedPercentage = total > 0 ? Math.Round((double)resolved / total * 100, 2) : 0,
-                ClosedWithoutResolvePercentage = total > 0 ? Math.Round((double)closed / total * 100, 2) : 0
-            };
-        }
-
-        private static string GetPriorityName(double priorityLevel)
-        {
-            return priorityLevel switch
-            {
-                1 => "Low",
-                2 => "Medium",
-                3 => "High",
-                4 => "Critical",
-                _ => "Unknown"
+                TicketsByPriority = baseResponse.TicketsByPriority
             };
         }
     }

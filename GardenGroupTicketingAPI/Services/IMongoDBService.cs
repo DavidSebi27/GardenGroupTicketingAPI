@@ -8,6 +8,7 @@ namespace GardenGroupTicketingAPI.Services
         // Ticket Operations
         Task<List<Ticket>> GetTicketsAsync();
         Task<List<Ticket>> GetTicketsByEmployeeNumberAsync(int employeeNumber);
+        Task<List<Ticket>> GetTicketsAssignedToEmployeeAsync(string employeeId);
         Task<Ticket?> GetTicketAsync(string id);
         Task CreateTicketAsync(Ticket ticket);
         Task UpdateTicketAsync(string id, UpdateTicketRequest updateRequest, string updatingUserId);
@@ -26,6 +27,7 @@ namespace GardenGroupTicketingAPI.Services
 
         // Dashboard Operations
         Task<DashboardResponse> GetEmployeeDashboardAsync(string mongoDbId);
-        Task<ServiceDeskDashboardResponse> GetServiceDeskDashboardAsync();
+        Task<DashboardResponse> GetServiceDeskDashboardAsync(string employeeId);
+        Task<ServiceDeskDashboardResponse> GetManagerDashboardAsync();
     }
 }
