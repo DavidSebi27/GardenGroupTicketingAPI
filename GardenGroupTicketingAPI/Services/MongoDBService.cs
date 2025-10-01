@@ -344,5 +344,18 @@ namespace GardenGroupTicketingAPI.Services
                 TicketsByPriority = baseResponse.TicketsByPriority
             };
         }
+
+        // hard deletes
+        public async Task<long> HardDeleteTicketsAsync(FilterDefinition<Ticket> filter)
+        {
+            var result = await _ticketsCollection.DeleteManyAsync(filter);
+            return result.DeletedCount;
+        }
+
+        public async Task<long> HardDeleteEmployeesAsync(FilterDefinition<Employee> filter)
+        {
+            var result = await _employeesCollection.DeleteManyAsync(filter);
+            return result.DeletedCount;
+        }
     }
 }

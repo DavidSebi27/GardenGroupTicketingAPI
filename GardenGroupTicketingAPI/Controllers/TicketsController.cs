@@ -2,6 +2,8 @@
 using GardenGroupTicketingAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
+using MongoDB.Driver;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GardenGroupTicketingAPI.Controllers
@@ -229,6 +231,55 @@ namespace GardenGroupTicketingAPI.Controllers
 
             var updatedTicket = await _mongoDBService.GetTicketAsync(id);
             return Ok(updatedTicket);
+        }
+
+        [HttpDelete("cleanup/test-data")]
+        public async Task<IActionResult> CleanupTestData()
+        {
+            if (!AuthService.IsManager(User))
+            {
+                return Forbid();
+            }
+
+            int ticketsDeleted = 0;
+            int employeesDeleted = 0;
+
+            try
+            {
+                // Hard delete tickets - directly from database
+                var ticketFilter = Builders<Ticket>.Filter.And(
+                    Builders<Ticket>.Filter.Gte("reported_by.employee_nr", 9001),
+                    Builders<Ticket>.Filter.Lte("reported_by.employee_nr", 9003)
+                );
+                var deleteTicketsResult = await _mongoDBService.HardDeleteTicketsAsync(ticketFilter);
+                ticketsDeleted = (int)deleteTicketsResult;
+
+                // Hard delete employees except current user
+                var currentUserId = AuthService.GetUserIdFromClaims(User);
+                var employeeFilter = Builders<Employee>.Filter.And(
+                    Builders<Employee>.Filter.In("employee_nr", new[] { 9001, 9002, 9003 }),
+                    Builders<Employee>.Filter.Ne("_id", ObjectId.Parse(currentUserId))
+                );
+                var deleteEmployeesResult = await _mongoDBService.HardDeleteEmployeesAsync(employeeFilter);
+                employeesDeleted = (int)deleteEmployeesResult;
+
+                return Ok(new
+                {
+                    message = "Test data cleaned up successfully",
+                    ticketsDeleted,
+                    employeesDeleted
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = "Cleanup failed",
+                    error = ex.Message,
+                    ticketsDeleted,
+                    employeesDeleted
+                });
+            }
         }
     }
 }
