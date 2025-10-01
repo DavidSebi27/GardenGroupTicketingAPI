@@ -217,7 +217,7 @@ namespace GardenGroupTicketingAPI.Services
             // Stage 2: Group by status and priority using $facet
             var pipeline = new[]
             {
-                new BsonDocument("$match", new BsonDocument("contact_person", employeeId)),
+                new BsonDocument("$match", new BsonDocument("contact_person", ObjectId.Parse(employeeId))),
                 new BsonDocument("$facet", new BsonDocument
                 {
                     { "total", new BsonArray { new BsonDocument("$count", "count") } },
@@ -343,19 +343,6 @@ namespace GardenGroupTicketingAPI.Services
                 ClosedWithoutResolvePercentage = baseResponse.ClosedWithoutResolvePercentage,
                 TicketsByPriority = baseResponse.TicketsByPriority
             };
-        }
-
-        // hard deletes
-        public async Task<long> HardDeleteTicketsAsync(FilterDefinition<Ticket> filter)
-        {
-            var result = await _ticketsCollection.DeleteManyAsync(filter);
-            return result.DeletedCount;
-        }
-
-        public async Task<long> HardDeleteEmployeesAsync(FilterDefinition<Employee> filter)
-        {
-            var result = await _employeesCollection.DeleteManyAsync(filter);
-            return result.DeletedCount;
         }
     }
 }

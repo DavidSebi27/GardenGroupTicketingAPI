@@ -30,9 +30,5 @@ namespace GardenGroupTicketingAPI.Services
         Task<DashboardResponse> GetEmployeeDashboardAsync(string mongoDbId);
         Task<DashboardResponse> GetServiceDeskDashboardAsync(string employeeId);
         Task<DashboardResponse> GetManagerDashboardAsync();
-
-        // Hard deletes
-        Task<long> HardDeleteTicketsAsync(FilterDefinition<Ticket> filter);
-        Task<long> HardDeleteEmployeesAsync(FilterDefinition<Employee> filter);
     }
 }
