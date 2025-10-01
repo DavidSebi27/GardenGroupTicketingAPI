@@ -1,10 +1,12 @@
 ﻿using GardenGroupTicketingAPI.Models;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using MongoDB.Bson;
+using System.Runtime.CompilerServices;
 
 namespace GardenGroupTicketingAPI.Services
 {
-    public class MongoDBService
+    public class MongoDBService : IMongoDBService
     {
         private readonly IMongoCollection<Ticket> _ticketsCollection;
         private readonly IMongoCollection<Employee> _employeesCollection;
@@ -46,7 +48,7 @@ namespace GardenGroupTicketingAPI.Services
         public async Task CreateTicketAsync(Ticket ticket)
         {
             var count = await _ticketsCollection.CountDocumentsAsync(_ => true);
-            ticket.TicketNumber = $"TGG-{DateTime.Now.Year}-{(count + 1):D6}";
+            ticket.TicketNumber = Constants.TicketNumberFormat.Generate(DateTime.Now.Year, count + 1);
             ticket.Date = DateTime.Now;
             await _ticketsCollection.InsertOneAsync(ticket);
         }
@@ -55,7 +57,6 @@ namespace GardenGroupTicketingAPI.Services
         {
             var update = Builders<Ticket>.Update;
             var updates = new List<UpdateDefinition<Ticket>>();
-            var status = TicketStatus.open;
 
             if (!string.IsNullOrWhiteSpace(updateRequest.Description))
                 updates.Add(update.Set(t => t.Description, updateRequest.Description.Trim()));
@@ -64,8 +65,15 @@ namespace GardenGroupTicketingAPI.Services
                 updates.Add(update.Set(t => t.PriorityLevel, updateRequest.PriorityLevel.Value));
 
             if (!string.IsNullOrWhiteSpace(updateRequest.Status) &&
-                Enum.TryParse<TicketStatus>(updateRequest.Status, out status))
+                Enum.TryParse<TicketStatus>(updateRequest.Status, out var status))
+            {
                 updates.Add(update.Set(t => t.Status, status));
+
+                if (status == TicketStatus.resolved)
+                {
+                    updates.Add(update.Set(t => t.ResolvedDate, DateTime.Now));
+                }
+            }
 
             if (updateRequest.Deadline.HasValue)
                 updates.Add(update.Set(t => t.Deadline, updateRequest.Deadline.Value));
@@ -148,15 +156,54 @@ namespace GardenGroupTicketingAPI.Services
             await _employeesCollection.Find(e => e.EmployeeNumber == employeeNumber && e.IsActive).AnyAsync();
 
         // Dashboard operations
-
+        // Dashboard statistics require multiple grouping operations and calculations.
+        // Using aggregation pipeline is more efficient than:
+        // 1. Loading all tickets into memory
+        // 2. Iterating through them to count by status
+        // 3. Calculating percentages in application code
+        // The database can perform these operations much faster.
         public async Task<DashboardResponse> GetEmployeeDashboardAsync(string mongoDbId)
         {
             var employee = await GetEmployeeByIdAsync(mongoDbId);
             if (employee == null) return new DashboardResponse();
 
-            var tickets = await GetTicketsByEmployeeAsync(employee.EmployeeNumber);
-            return CalculateDashboardStats(tickets);
+            // Aggregation pipeline for employee dashboard
+            // Stage 1: Match tickets for this employee
+            // Stage 2: Group by status and count
+            // Stage 3: Project the results into dashboard format
+            var pipeline = new[]
+            {
+                new BsonDocument("$match", new BsonDocument("reported_by.employee_nr", employee.EmployeeNumber)),
+                new BsonDocument("$facet", new BsonDocument
+                {
+                    { "total", new BsonArray { new BsonDocument("$count", "count")} },
+                    { "byStatus", new BsonArray
+                        {
+                            new BsonDocument("$group", new BsonDocument
+                            {
+                                { "_id", "$status"},
+                                { "count", new BsonDocument("$sum", 1)}
+
+                            })
+                        }
+                    },
+                    { "byPriority", new BsonArray
+                        {
+                            new BsonDocument("$group", new BsonDocument
+                            {
+                                { "_id", "$priority_level"},
+                                { "count", new BsonDocument("count", 1)}
+                            })
+                        }
+                    }
+                })
+            };
+
+            var result = await _ticketsCollection.Aggregate<BsonDocument>(pipeline).FirstOrDefaultAsync();
+
+            return ParseDashboardResult(result);
         }
+
 
         public async Task<DashboardResponse> GetServiceDeskDashboardAsync()
         {
@@ -172,6 +219,76 @@ namespace GardenGroupTicketingAPI.Services
                 .ToDictionary(g => g.Key, g => g.Count());*/
 
             return dashboard;
+        }
+
+        // helper methods
+        private static DashboardResponse ParseDashboardResult(BsonDocument result)
+        {
+            //total tickets for employee
+            var total = result["total"].AsBsonArray.Count > 0
+                ? result["total"][0]["count"].AsInt32
+                : 0;
+
+            // gets all statuses for the employees tickets, adding them to a dictionary having been separated into groups by status, and magically counted
+            var statusCounts = new Dictionary<string, int>();
+            foreach (var doc in result["byStatus"].AsBsonArray)
+            {
+                var status = doc["_id"].AsString;
+                var count = doc["count"].AsInt32;
+                statusCounts[status] = count;
+            }
+
+            var open = statusCounts.GetValueOrDefault("open", 0) +
+                       statusCounts.GetValueOrDefault("inProgress", 0);
+            var resolved = statusCounts.GetValueOrDefault("resolved", 0);
+            var closed = statusCounts.GetValueOrDefault("closed", 0);
+
+            var priorityCounts = new Dictionary<string, int>();
+            foreach (var doc in result["byPriority"].AsBsonArray)
+            {
+                var priority = doc["_id"].AsInt32;
+                var count = doc["count"].AsInt32;
+                priorityCounts[Constants.PriorityLevels.GetName(priority)] = count;
+            }
+
+            // dashboard respponse it and calculate it
+            return new DashboardResponse
+            {
+                TotalTickets = total,
+                OpenPercentage = total > 0 ? Math.Round((double)open / total * 100, 2) : 0,
+                ResolvedPercentage = total > 0 ? Math.Round((double)resolved / total * 100, 2) : 0,
+                ClosedWithoutResolvePercentage = total > 0 ? Math.Round((double)closed / total * 100, 2) : 0,
+                TicketsByPriority = priorityCounts
+            };
+        }
+
+        private static ServiceDeskDashboardResponse ParseServiceDeskDashboardResult(BsonDocument result)
+        {
+            var baseResponse = ParseDashboardResult(result);
+
+            var unassigned = result["unassigned"].AsBsonArray.Count > 0
+                ? result["unassigned"][0]["count"].AsInt32
+                : 0;
+
+            var overdue = result["overdue"].AsBsonArray.Count > 0
+                ? result["overdue"][0]["count"].AsInt32
+                : 0;
+
+            var avgResolutionTime = result["resolutionTime"].AsBsonArray.Count > 0
+                ? result["resolutionTime"][0]["avgTime"].ToDouble() / (1000 * 60 * 60) // Convert ms to hours
+                : 0;
+
+            return new ServiceDeskDashboardResponse
+            {
+                TotalTickets = baseResponse.TotalTickets,
+                OpenPercentage = baseResponse.OpenPercentage,
+                ResolvedPercentage = baseResponse.ResolvedPercentage,
+                ClosedWithoutResolvePercentage = baseResponse.ClosedWithoutResolvePercentage,
+                TicketsByPriority = baseResponse.TicketsByPriority,
+                UnassignedTickets = unassigned,
+                OverdueTickets = overdue,
+                AverageResolutionTime = Math.Round(avgResolutionTime, 2)
+            };
         }
 
         private static DashboardResponse CalculateDashboardStats(List<Ticket> tickets)
