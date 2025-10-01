@@ -10,10 +10,10 @@ namespace GardenGroupTicketingAPI.Controllers
     [Authorize]
     public class EmployeesController : ControllerBase
     {
-        private readonly MongoDBService _mongoDbService;
+        private readonly IMongoDBService _mongoDbService;
         private readonly IPasswordHashingService _passwordHashingService;
 
-        public EmployeesController(MongoDBService mongoDbService, IPasswordHashingService passwordHashingService)
+        public EmployeesController(IMongoDBService mongoDbService, IPasswordHashingService passwordHashingService)
         {
             _mongoDbService = mongoDbService;
             _passwordHashingService = passwordHashingService;

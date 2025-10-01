@@ -18,7 +18,7 @@ namespace GardenGroupTicketingAPI
             builder.Services.Configure<JwtSettings>(
                 builder.Configuration.GetSection("JwtSettings"));
 
-            builder.Services.AddSingleton<MongoDBService>();
+            builder.Services.AddSingleton<IMongoDBService>();
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<IPasswordHashingService, PasswordHashingService>();
             // Add services to the container.

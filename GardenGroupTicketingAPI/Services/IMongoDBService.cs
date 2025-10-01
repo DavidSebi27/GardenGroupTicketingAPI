@@ -28,6 +28,6 @@ namespace GardenGroupTicketingAPI.Services
         // Dashboard Operations
         Task<DashboardResponse> GetEmployeeDashboardAsync(string mongoDbId);
         Task<DashboardResponse> GetServiceDeskDashboardAsync(string employeeId);
-        Task<ServiceDeskDashboardResponse> GetManagerDashboardAsync();
+        Task<DashboardResponse> GetManagerDashboardAsync();
     }
 }

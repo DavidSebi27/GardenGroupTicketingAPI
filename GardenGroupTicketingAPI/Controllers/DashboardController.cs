@@ -9,9 +9,9 @@ namespace GardenGroupTicketingAPI.Controllers
     [Authorize]
     public class DashboardController : ControllerBase
     {
-        private readonly MongoDBService _mongoDBService;
+        private readonly IMongoDBService _mongoDBService;
 
-        public DashboardController(MongoDBService mongoDBService)
+        public DashboardController(IMongoDBService mongoDBService)
         {
             _mongoDBService = mongoDBService;
         }

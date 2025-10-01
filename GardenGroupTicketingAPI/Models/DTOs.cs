@@ -27,27 +27,27 @@ namespace GardenGroupTicketingAPI.Models
         [Required(ErrorMessage = "First name is required")]
         [StringLength(50, ErrorMessage = "First name cannot exceed 50 characters")]
         public string FirstName { get; set; } = null!;
-        
+
         [Required(ErrorMessage = "Last name is required")]
         [StringLength(50, ErrorMessage = "Last name cannot exceed 50 characters")]
         public string LastName { get; set; } = null!;
-        
+
         [Required(ErrorMessage = "Email is required")]
         [EmailAddress(ErrorMessage = "Invalid email format")]
         [StringLength(100, ErrorMessage = "Email cannot exceed 100 characters")]
         public string Email { get; set; } = null!;
-        
+
         [Required(ErrorMessage = "Password is required")]
         [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be between 6 and 100 characters")]
         public string Password { get; set; } = null!;
-        
+
         [Required(ErrorMessage = "Department is required")]
         [StringLength(50, ErrorMessage = "Department cannot exceed 50 characters")]
         public string Department { get; set; } = null!;
-        
+
         [Phone(ErrorMessage = "Invalid phone number format")]
         public string? PhoneNumber { get; set; }
-        
+
         public Address? Address { get; set; }
 
         [Required(ErrorMessage = "Company is required")]
@@ -57,7 +57,7 @@ namespace GardenGroupTicketingAPI.Models
         [Required(ErrorMessage = "Employee number is required")]
         [Range(1, int.MaxValue, ErrorMessage = "Employee number must be a positive integer")]
         public int EmployeeNumber { get; set; }
-        
+
         [Range(1, 3, ErrorMessage = "Access level must be between 1 and 3")]
         public int AccessLevel { get; set; } = 1;
     }
@@ -66,7 +66,7 @@ namespace GardenGroupTicketingAPI.Models
         [Required(ErrorMessage = "Description is required")]
         [StringLength(1000, MinimumLength = 10, ErrorMessage = "Description must be between 10 and 1000 characters")]
         public string Description { get; set; } = null!;
-        
+
         [Range(1, 4, ErrorMessage = "Priority level must be between 1 (Low) and 4 (Critical)")]
         public int? PriorityLevel { get; set; } = 2;
 
@@ -88,7 +88,7 @@ namespace GardenGroupTicketingAPI.Models
         public DateTime? Deadline { get; set; }
 
         public string? AssignedTo { get; set; }
-        
+
         [StringLength(1000, ErrorMessage = "Resolution notes cannot exceed 1000 characters")]
         public string? ResolutionNotes { get; set; }
     }
@@ -121,14 +121,5 @@ namespace GardenGroupTicketingAPI.Models
         public double ResolvedPercentage { get; set; }
         public double ClosedWithoutResolvePercentage { get; set; }
         public Dictionary<string, int>? TicketsByPriority { get; set; } // sorting
-    }
-
-    public class ServiceDeskDashboardResponse : DashboardResponse
-    {
-        public int UnassignedTickets { get; set; }
-        public int OverdueTickets { get; set; }
-        public Dictionary<string, int>? TicketsByServiceDeskEmployee { get; set; }
-        public double AverageResolutionTime { get; set; }
-
     }
 }

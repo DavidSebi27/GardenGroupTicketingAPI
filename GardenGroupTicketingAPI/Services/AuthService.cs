@@ -7,13 +7,13 @@ using System.Text;
 
 namespace GardenGroupTicketingAPI.Services
 {
-    public class AuthService
+    public class AuthService : IAuthService
     {
         private readonly JwtSettings _jwtSettings;
-        private readonly MongoDBService _mongoDBService;
+        private readonly IMongoDBService _mongoDBService;
         private readonly IPasswordHashingService _passwordHashingService;
 
-        public AuthService(IOptions<JwtSettings> jwtSettings, MongoDBService mongoDBService, IPasswordHashingService passwordHashingService)
+        public AuthService(IOptions<JwtSettings> jwtSettings, IMongoDBService mongoDBService, IPasswordHashingService passwordHashingService)
         {
             _jwtSettings = jwtSettings.Value;
             _mongoDBService = mongoDBService;

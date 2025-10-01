@@ -254,7 +254,7 @@ namespace GardenGroupTicketingAPI.Services
         // 3. More efficient than: fetching all tickets -> iterating in C# -> counting each status
         // Alternative approach would require loading potentially thousands of tickets into memory,
         // then iterating through them multiple times to count by different fields.
-        public async Task<ServiceDeskDashboardResponse> GetManagerDashboardAsync()
+        public async Task<DashboardResponse> GetManagerDashboardAsync()
         {
             var pipeline = new[]
             {
@@ -328,11 +328,11 @@ namespace GardenGroupTicketingAPI.Services
             };
         }
 
-        private static ServiceDeskDashboardResponse ParseServiceDeskDashboardResult(BsonDocument result)
+        private static DashboardResponse ParseServiceDeskDashboardResult(BsonDocument result)
         {
             var baseResponse = ParseDashboardResult(result);
 
-            return new ServiceDeskDashboardResponse
+            return new DashboardResponse
             {
                 TotalTickets = baseResponse.TotalTickets,
                 OpenPercentage = baseResponse.OpenPercentage,
