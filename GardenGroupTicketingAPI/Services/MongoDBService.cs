@@ -195,7 +195,7 @@ namespace GardenGroupTicketingAPI.Services
                             new BsonDocument("$group", new BsonDocument
                             {
                                 { "_id", "$priority_level"},
-                                { "count", new BsonDocument("count", 1)}
+                                { "count", new BsonDocument("$sum", 1)}
                             })
                         }
                     }
@@ -287,21 +287,25 @@ namespace GardenGroupTicketingAPI.Services
             return ParseServiceDeskDashboardResult(result);
         }
 
-        // helper methods
         private static DashboardResponse ParseDashboardResult(BsonDocument result)
         {
-            //total tickets for employee
+
+            // Total tickets
             var total = result["total"].AsBsonArray.Count > 0
                 ? result["total"][0]["count"].AsInt32
                 : 0;
 
-            // gets all statuses for the employees tickets, adding them to a dictionary having been separated into groups by status, and magically counted
+
+            // Get all statuses
             var statusCounts = new Dictionary<string, int>();
+    
             foreach (var doc in result["byStatus"].AsBsonArray)
             {
-                var status = doc["_id"].AsString;
+                var statusInt = doc["_id"].AsInt32;
                 var count = doc["count"].AsInt32;
-                statusCounts[status] = count;
+        
+                var statusName = ((TicketStatus)statusInt).ToString();
+                statusCounts[statusName] = count;
             }
 
             var open = statusCounts.GetValueOrDefault("open", 0) +
@@ -317,7 +321,6 @@ namespace GardenGroupTicketingAPI.Services
                 priorityCounts[Constants.PriorityLevels.GetName(priority)] = count;
             }
 
-            // dashboard respponse it and calculate it
             return new DashboardResponse
             {
                 TotalTickets = total,
