@@ -79,8 +79,8 @@ namespace GardenGroupTicketingAPI.Services
 
         private string GenerateJwtToken(Employee employee)
         {
-            var tokenHandler = new JwtSecurityTokenHandler(); // makes token
-            var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey); // converts secret key to bytes to be used for encryption
+            var tokenHandler = new JwtSecurityTokenHandler(); 
+            var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);
 
             var claims = new List<Claim> // claims are pieces of info known about the user, like fields on a drivers license
             {

@@ -199,12 +199,18 @@ namespace GardenGroupTicketingAPI.Services
         // more efficient at database level than loading into memory and iterating.
         public async Task<DashboardResponse> GetServiceDeskDashboardAsync(string employeeId)
         {
+
+            if (!ObjectId.TryParse(employeeId, out var objectId))
+            {
+                return new DashboardResponse();
+            }
+
             // Aggregation pipeline for service desk dashboard
             // Stage 1: Match tickets assigned to this service desk employee
             // Stage 2: Group by status and priority using $facet
             var pipeline = new[]
             {
-                new BsonDocument("$match", new BsonDocument("contact_person", ObjectId.Parse(employeeId))),
+                new BsonDocument("$match", new BsonDocument("contact_person", objectId)),
                 new BsonDocument("$facet", new BsonDocument
                 {
                     { "total", new BsonArray { new BsonDocument("$count", "count") } },
