@@ -12,6 +12,16 @@ namespace GardenGroupTicketingAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            var mongoUri = Environment.GetEnvironmentVariable("MONGODB_URI")
+                ?? builder.Configuration["MongoDB:ConnectionURI"];
+            var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")
+                ?? builder.Configuration["JwtSettings:SecretKey"];
+
+            if (!string.IsNullOrEmpty(mongoUri))
+                builder.Configuration["MongoDB:ConnectionURI"] = mongoUri;
+            if (!string.IsNullOrEmpty(jwtSecret))
+                builder.Configuration["JwtSettings:SecretKey"] = jwtSecret;
+
             builder.Services.Configure<MongoDBSettings>(
                 builder.Configuration.GetSection("MongoDB"));
 
@@ -39,7 +49,7 @@ namespace GardenGroupTicketingAPI
             })
                 .AddJwtBearer(x =>
                 {
-                    x.RequireHttpsMetadata = false; // Set to true in production
+                    x.RequireHttpsMetadata = !builder.Environment.IsProduction();
                     x.SaveToken = true;
                     x.TokenValidationParameters = new TokenValidationParameters
                     {
