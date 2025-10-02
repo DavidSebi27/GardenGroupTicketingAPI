@@ -23,7 +23,7 @@ namespace GardenGroupTicketingAPI.Models
         public string? ContactPerson { get; set; }
         
         [BsonElement("priority_level")]
-        public int PriorityLevel { get; set; } = 2; // 1 = Low, 2 = Medium, 3 = High, 4 = Critical
+        public int PriorityLevel { get; set; } = Constants.PriorityLevels.Default; // 1 = Low, 2 = Medium, 3 = High, 4 = Critical
         
         [BsonElement("deadline")]
         public DateTime? Deadline { get; set; }

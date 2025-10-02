@@ -25,19 +25,6 @@ namespace GardenGroupTicketingAPI.Services
         public async Task<List<Ticket>> GetTicketsAsync() =>
             await _ticketsCollection.Find(_=> true).ToListAsync();
 
-        public async Task<List<Ticket>> GetTicketsByEmployeeAsync(int employeeNumber) =>
-            await _ticketsCollection.Find(t => t.ReportedBy.EmployeeNumber == employeeNumber).ToListAsync();
-
-        public async Task<List<Ticket>> GetTicketsByEmployeeIdAsync(string employeeMongoId)
-        {
-            // Get the employee first to validate and get their employee number
-            var employee = await GetEmployeeByIdAsync(employeeMongoId);
-            if (employee == null)
-                return new List<Ticket>();
-
-            // Find tickets reported by this employee using their employee number
-            return await _ticketsCollection.Find(t => t.ReportedBy.EmployeeNumber == employee.EmployeeNumber).ToListAsync();
-        }
 
         public async Task<List<Ticket>> GetTicketsByEmployeeNumberAsync(int employeeNumber) =>
             await _ticketsCollection.Find(t => t.ReportedBy.EmployeeNumber == employeeNumber).ToListAsync();
@@ -284,7 +271,7 @@ namespace GardenGroupTicketingAPI.Services
 
             var result = await _ticketsCollection.Aggregate<BsonDocument>(pipeline).FirstOrDefaultAsync();
 
-            return ParseServiceDeskDashboardResult(result);
+            return ParseDashboardResult(result);
         }
 
         private static DashboardResponse ParseDashboardResult(BsonDocument result)
@@ -328,20 +315,6 @@ namespace GardenGroupTicketingAPI.Services
                 ResolvedPercentage = total > 0 ? Math.Round((double)resolved / total * 100, 2) : 0,
                 ClosedWithoutResolvePercentage = total > 0 ? Math.Round((double)closed / total * 100, 2) : 0,
                 TicketsByPriority = priorityCounts
-            };
-        }
-
-        private static DashboardResponse ParseServiceDeskDashboardResult(BsonDocument result)
-        {
-            var baseResponse = ParseDashboardResult(result);
-
-            return new DashboardResponse
-            {
-                TotalTickets = baseResponse.TotalTickets,
-                OpenPercentage = baseResponse.OpenPercentage,
-                ResolvedPercentage = baseResponse.ResolvedPercentage,
-                ClosedWithoutResolvePercentage = baseResponse.ClosedWithoutResolvePercentage,
-                TicketsByPriority = baseResponse.TicketsByPriority
             };
         }
     }

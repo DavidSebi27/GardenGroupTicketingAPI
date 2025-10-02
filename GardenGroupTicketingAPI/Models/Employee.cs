@@ -27,7 +27,7 @@ namespace GardenGroupTicketingAPI.Models
         public string? PhoneNumber { get; set; }
         
         [BsonElement("access_level")]
-        public int AccessLevel { get; set; } = 1;
+        public int AccessLevel { get; set; } = Constants.AccessLevels.Regular;
         
         [BsonElement("address")]
         public Address? Address { get; set; }
