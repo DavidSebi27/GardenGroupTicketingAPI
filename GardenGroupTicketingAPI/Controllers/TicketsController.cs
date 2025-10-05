@@ -91,9 +91,8 @@ namespace GardenGroupTicketingAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var userId = AuthService.GetUserIdFromClaims(User);
-            var currentEmployee = await _mongoDBService.GetEmployeeByIdAsync(userId);
-            if (currentEmployee == null)
+            var reportingEmployee = await _mongoDBService.GetEmployeeByNumberAsync(request.EmployeeNumber);
+            if (reportingEmployee == null)
             {
                 return Unauthorized(new { message = Constants.ErrorMessages.EmployeeNotFound});
             }
@@ -107,13 +106,13 @@ namespace GardenGroupTicketingAPI.Controllers
                 Date = DateTime.Now,
                 ReportedBy = new ReportedByEmployee
                 {
-                    FirstName = currentEmployee.FirstName,
-                    LastName = currentEmployee.LastName,
-                    Email = currentEmployee.Email,
-                    Department = currentEmployee.Department,
-                    PhoneNumber = currentEmployee.PhoneNumber,
-                    Company = currentEmployee.Company,
-                    EmployeeNumber = currentEmployee.EmployeeNumber
+                    FirstName = reportingEmployee.FirstName,
+                    LastName = reportingEmployee.LastName,
+                    Email = reportingEmployee.Email,
+                    Department = reportingEmployee.Department,
+                    PhoneNumber = reportingEmployee.PhoneNumber,
+                    Company = reportingEmployee.Company,
+                    EmployeeNumber = reportingEmployee.EmployeeNumber
                 }
             };
 

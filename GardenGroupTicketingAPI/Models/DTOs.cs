@@ -72,6 +72,10 @@ namespace GardenGroupTicketingAPI.Models
 
         [DataType(DataType.DateTime)]
         public DateTime? Deadline { get; set; }
+
+        [Required(ErrorMessage = "Employee number is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Employee number must be a positive integer")]
+        public int EmployeeNumber { get; set; }
     }
     public class UpdateTicketRequest
     {
