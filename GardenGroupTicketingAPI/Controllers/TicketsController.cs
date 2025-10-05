@@ -78,7 +78,8 @@ namespace GardenGroupTicketingAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (request.PriorityLevel < Constants.PriorityLevels.Min ||
+            if (request.PriorityLevel.HasValue && 
+                request.PriorityLevel < Constants.PriorityLevels.Min ||
                 request.PriorityLevel > Constants.PriorityLevels.Max)
             {
                 ModelState.AddModelError("PriorityLevel", $"Priority level must be between {Constants.PriorityLevels.Min} (Low) and {Constants.PriorityLevels.Max} (Critical)");
@@ -94,7 +95,7 @@ namespace GardenGroupTicketingAPI.Controllers
             var reportingEmployee = await _mongoDBService.GetEmployeeByNumberAsync(request.EmployeeNumber);
             if (reportingEmployee == null)
             {
-                return Unauthorized(new { message = Constants.ErrorMessages.EmployeeNotFound});
+                return BadRequest(new { message = Constants.ErrorMessages.EmployeeNotFound});
             }
 
             var ticket = new Ticket
