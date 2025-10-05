@@ -62,6 +62,11 @@ namespace GardenGroupTicketingAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateTicket([FromBody] CreateTicketRequest request)
         {
+            if (!AuthService.IsServiceDeskEmployee(User))
+            {
+                return Forbid();
+            }
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -154,16 +159,28 @@ namespace GardenGroupTicketingAPI.Controllers
         [HttpDelete("{id}")] 
         public async Task<IActionResult> DeleteTicket(string id)
         {
-            if (!AuthService.IsServiceDeskEmployee(User))
-            {
-                return Forbid();
-            }
-
             var ticket = await _mongoDBService.GetTicketAsync(id);
             if (ticket == null)
             {
                 return NotFound(new { message = Constants.ErrorMessages.TicketNotFound});
             }
+
+            var userId = AuthService.GetUserIdFromClaims(User);
+            var employeeNumber = AuthService.GetEmployeeNumberFromClaims(User);
+            var isManager = AuthService.IsManager(User);
+            var isServiceDesk = AuthService.IsServiceDeskEmployee(User);
+
+            // Check if user has permission to delete this ticket
+            var canDelete = isManager ||
+                            (isServiceDesk && ticket.ContactPerson == userId) ||
+                            (!isServiceDesk && ticket.ReportedBy.EmployeeNumber == employeeNumber);
+
+            if (!canDelete)
+            {
+                return Forbid();
+            }
+
+
 
             await _mongoDBService.DeleteTicketAsync(id);
             return NoContent();
