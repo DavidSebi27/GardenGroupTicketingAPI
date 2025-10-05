@@ -97,14 +97,14 @@ namespace GardenGroupTicketingAPI
             app.MapGet("/health", () => new {
                 Status = "Healthy",
                 Timestamp = DateTime.Now,
-                Version = "1.3.2",
+                Version = "2.0",
                 Service = "Garden Group Incident Management API"
             });
 
             // API info endpoint
             app.MapGet("/api/info", () => new {
                 name = "Garden Group Ticketing API",
-                version = "1.3.2",
+                version = "2.0",
                 description = "REST API for Garden Group ticket management system",
                 endpoints = new
                 {
