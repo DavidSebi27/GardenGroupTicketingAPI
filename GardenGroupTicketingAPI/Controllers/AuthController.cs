@@ -31,30 +31,5 @@ namespace GardenGroupTicketingAPI.Controllers
 
             return Ok(result);
         }
-
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterEmployeeRequest request)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            try
-            {
-                var employee = await _authService.RegisterEmployeeAsync(request);
-                if (employee == null)
-                {
-                    return BadRequest(new { message = "Employee with this email or employee number already exists" });
-                }
-
-                return CreatedAtAction("GetEmployee", "Employees", new { id = employee.Id },
-                    new { message = "Employee registered successfully!", employee });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
     }
 }
