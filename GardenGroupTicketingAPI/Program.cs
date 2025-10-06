@@ -115,6 +115,29 @@ namespace GardenGroupTicketingAPI
                     dashboard = "/api/dashboard"
                 }
             });
+
+            // Temporary debug endpoint - REMOVE IN PRODUCTION
+            app.MapPost("/debug/test-login", async (IMongoDBService mongoDb, IPasswordHashingService passwordService) =>
+            {
+                var employee = await mongoDb.GetEmployeeByNumberAsync(1000);
+
+                if (employee == null)
+                    return Results.Ok(new { error = "Employee 1000 not found!" });
+
+                var passwordToTest = "manager123";
+                bool isValid = passwordService.VerifyPassword(passwordToTest, employee.PasswordHash);
+
+                return Results.Ok(new
+                {
+                    employeeFound = true,
+                    employeeNumber = employee.EmployeeNumber,
+                    firstName = employee.FirstName,
+                    isActive = employee.IsActive,
+                    passwordHash = employee.PasswordHash,
+                    testPassword = passwordToTest,
+                    passwordMatches = isValid
+                });
+            });
             var port = Environment.GetEnvironmentVariable("PORT") ?? "5259";
             app.Run($"http://0.0.0.0:{port}");
         }
