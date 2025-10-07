@@ -141,6 +141,28 @@ namespace GardenGroupTicketingAPI
             {
                 return Results.Ok(new { message = "POST works!", timestamp = DateTime.UtcNow });
             });
+
+            // Generate correct hash using API's BCrypt
+            app.MapGet("/debug/generate-hash/{password}", (string password, IPasswordHashingService passwordService) =>
+            {
+                try
+                {
+                    string hash = passwordService.HashPassword(password);
+                    bool verify = passwordService.VerifyPassword(password, hash);
+
+                    return Results.Ok(new
+                    {
+                        password = password,
+                        generatedHash = hash,
+                        verificationTest = verify,
+                        message = "Copy the generatedHash and update your database!"
+                    });
+                }
+                catch (Exception ex)
+                {
+                    return Results.Ok(new { error = ex.Message });
+                }
+            });
             var port = Environment.GetEnvironmentVariable("PORT") ?? "5259";
             app.Run($"http://0.0.0.0:{port}");
         }
