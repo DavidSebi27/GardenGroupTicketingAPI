@@ -138,6 +138,11 @@ namespace GardenGroupTicketingAPI
                     passwordMatches = isValid
                 });
             });
+
+            app.MapPost("/test-post", () =>
+            {
+                return Results.Ok(new { message = "POST works!", timestamp = DateTime.UtcNow });
+            });
             var port = Environment.GetEnvironmentVariable("PORT") ?? "5259";
             app.Run($"http://0.0.0.0:{port}");
         }
