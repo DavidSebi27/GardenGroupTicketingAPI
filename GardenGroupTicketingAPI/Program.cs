@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using GardenGroupTicketingAPI.Models;
 using GardenGroupTicketingAPI.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using System.Text;
 
 namespace GardenGroupTicketingAPI
@@ -31,7 +32,6 @@ namespace GardenGroupTicketingAPI
             builder.Services.AddSingleton<IMongoDBService, MongoDBService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IPasswordHashingService, PasswordHashingService>();
-            // Add services to the container.
 
             builder.Services.AddControllers();
 
@@ -75,16 +75,26 @@ namespace GardenGroupTicketingAPI
                 });
             });
 
+            // Swagger setup
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new() { Title = "Garden Group API", Version = "v1" });
+            });
 
             var app = builder.Build();
+
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.UseCors("AllowAll");
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
 
-            // Add a health check endpoint
-            app.MapGet("/health", () => new {
+            // Health check endpoint
+            app.MapGet("/health", () => new
+            {
                 Status = "Healthy",
                 Timestamp = DateTime.Now,
                 Version = "2.0",
@@ -92,7 +102,8 @@ namespace GardenGroupTicketingAPI
             });
 
             // API info endpoint
-            app.MapGet("/api/info", () => new {
+            app.MapGet("/api/info", () => new
+            {
                 name = "Garden Group Ticketing API",
                 version = "2.0",
                 description = "REST API for Garden Group ticket management system",
@@ -102,59 +113,11 @@ namespace GardenGroupTicketingAPI
                     auth = "/api/auth",
                     employees = "/api/employees",
                     tickets = "/api/tickets",
-                    dashboard = "/api/dashboard"
+                    dashboard = "/api/dashboard",
+                    swagger = "/swagger"
                 }
             });
 
-            // Temporary debug endpoint - REMOVE IN PRODUCTION
-            app.MapPost("/debug/test-login", async (IMongoDBService mongoDb, IPasswordHashingService passwordService) =>
-            {
-                var employee = await mongoDb.GetEmployeeByNumberAsync(1000);
-
-                if (employee == null)
-                    return Results.Ok(new { error = "Employee 1000 not found!" });
-
-                var passwordToTest = "manager123";
-                bool isValid = passwordService.VerifyPassword(passwordToTest, employee.PasswordHash);
-
-                return Results.Ok(new
-                {
-                    employeeFound = true,
-                    employeeNumber = employee.EmployeeNumber,
-                    firstName = employee.FirstName,
-                    isActive = employee.IsActive,
-                    passwordHash = employee.PasswordHash,
-                    testPassword = passwordToTest,
-                    passwordMatches = isValid
-                });
-            });
-
-            app.MapPost("/test-post", () =>
-            {
-                return Results.Ok(new { message = "POST works!", timestamp = DateTime.UtcNow });
-            });
-
-            // Generate correct hash using API's BCrypt
-            app.MapGet("/debug/generate-hash/{password}", (string password, IPasswordHashingService passwordService) =>
-            {
-                try
-                {
-                    string hash = passwordService.HashPassword(password);
-                    bool verify = passwordService.VerifyPassword(password, hash);
-
-                    return Results.Ok(new
-                    {
-                        password = password,
-                        generatedHash = hash,
-                        verificationTest = verify,
-                        message = "Copy the generatedHash and update your database!"
-                    });
-                }
-                catch (Exception ex)
-                {
-                    return Results.Ok(new { error = ex.Message });
-                }
-            });
             var port = Environment.GetEnvironmentVariable("PORT") ?? "5259";
             app.Run($"http://0.0.0.0:{port}");
         }
