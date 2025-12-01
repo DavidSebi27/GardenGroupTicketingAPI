@@ -1,8 +1,7 @@
-using GardenGroupTicketingAPI.Models;
-using GardenGroupTicketingAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
+using GardenGroupTicketingAPI.Models;
+using GardenGroupTicketingAPI.Services;
 using System.Text;
 
 namespace GardenGroupTicketingAPI
@@ -75,15 +74,13 @@ namespace GardenGroupTicketingAPI
                 });
             });
 
-            // Swagger setup
+            // MINIMAL SWAGGER - NO OPENAPI MODELS
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new() { Title = "Garden Group API", Version = "v1" });
-            });
+            builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
+            // Enable Swagger
             app.UseSwagger();
             app.UseSwaggerUI();
 
@@ -99,23 +96,6 @@ namespace GardenGroupTicketingAPI
                 Timestamp = DateTime.Now,
                 Version = "2.0",
                 Service = "Garden Group Incident Management API"
-            });
-
-            // API info endpoint
-            app.MapGet("/api/info", () => new
-            {
-                name = "Garden Group Ticketing API",
-                version = "2.0",
-                description = "REST API for Garden Group ticket management system",
-                endpoints = new
-                {
-                    health = "/health",
-                    auth = "/api/auth",
-                    employees = "/api/employees",
-                    tickets = "/api/tickets",
-                    dashboard = "/api/dashboard",
-                    swagger = "/swagger"
-                }
             });
 
             var port = Environment.GetEnvironmentVariable("PORT") ?? "5259";
